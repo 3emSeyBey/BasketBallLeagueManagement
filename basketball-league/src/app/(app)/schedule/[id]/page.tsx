@@ -5,7 +5,10 @@ import { matches, teams } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScoreForm } from "@/components/schedule/ScoreForm";
+import { StreamHost } from "@/components/stream/StreamHost";
+import { StreamPlayer } from "@/components/stream/StreamPlayer";
 import { getSession } from "@/lib/session";
+import { canManageTeam } from "@/lib/rbac";
 
 export default async function MatchDetail({
   params,
@@ -46,13 +49,15 @@ export default async function MatchDetail({
         </div>
       </Card>
 
-      {/* Live stream player placeholder — wired in Phase 9 */}
-      <Card className="p-6">
-        <h2 className="font-semibold mb-3">Live Stream</h2>
-        <p className="text-sm text-muted-foreground">
-          Stream player loads here when match is live. Channel:{" "}
-          <code>{m.agoraChannel}</code>
-        </p>
+      <Card className="p-6 space-y-4">
+        <h2 className="font-semibold">Live Stream</h2>
+        {session?.role === "admin" ||
+        canManageTeam(session ?? null, m.homeTeamId) ||
+        canManageTeam(session ?? null, m.awayTeamId) ? (
+          <StreamHost matchId={m.id} />
+        ) : (
+          <StreamPlayer matchId={m.id} />
+        )}
       </Card>
 
       {session?.role === "admin" && (

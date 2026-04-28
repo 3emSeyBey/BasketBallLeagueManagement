@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { matches, teams } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StreamPlayer } from "@/components/stream/StreamPlayer";
 
 export default async function PublicMatchDetail({
   params,
@@ -33,12 +34,9 @@ export default async function PublicMatchDetail({
           {m.homeScore} <span className="text-muted-foreground mx-3">—</span> {m.awayScore}
         </div>
       </Card>
-      <Card className="p-6">
-        <h2 className="font-semibold mb-3">Live Stream</h2>
-        <p className="text-sm text-muted-foreground">
-          Stream player loads here when match is live. Channel:{" "}
-          <code>{m.agoraChannel}</code>
-        </p>
+      <Card className="p-6 space-y-4">
+        <h2 className="font-semibold">Live Stream</h2>
+        <StreamPlayer matchId={m.id} />
       </Card>
     </div>
   );
