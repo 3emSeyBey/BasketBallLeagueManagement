@@ -3,6 +3,8 @@ import { teams, matches } from "@/db/schema";
 import { computeStandings } from "@/lib/standings";
 import { StandingsTable } from "@/components/standings/StandingsTable";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicStandings() {
   const [allTeams, allMatches] = await Promise.all([
     db.select().from(teams),

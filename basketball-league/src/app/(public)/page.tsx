@@ -3,6 +3,8 @@ import { db } from "@/db/client";
 import { teams, matches } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicHome() {
   const [t, m] = await Promise.all([
     db.select().from(teams),

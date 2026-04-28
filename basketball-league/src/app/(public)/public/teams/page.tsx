@@ -2,6 +2,8 @@ import { db } from "@/db/client";
 import { teams } from "@/db/schema";
 import { TeamCard } from "@/components/teams/TeamCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicTeams() {
   const all = await db.select().from(teams).orderBy(teams.name);
   return (

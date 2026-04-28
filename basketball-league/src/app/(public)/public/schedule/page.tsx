@@ -3,6 +3,8 @@ import { matches, teams } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { MatchRow } from "@/components/schedule/MatchRow";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicSchedule() {
   const [allMatches, allTeams] = await Promise.all([
     db.select().from(matches).orderBy(matches.scheduledAt),
