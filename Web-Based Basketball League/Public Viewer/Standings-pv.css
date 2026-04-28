@@ -1,0 +1,58 @@
+/* Standings Specific UI */
+
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    padding: 15px 10px;
+    border-top: none;
+}
+
+.table tbody td {
+    padding: 18px 10px;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.rank-number {
+    font-weight: 800;
+    color: #f37021;
+    width: 30px;
+    display: inline-block;
+}
+
+.team-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+    .team-cell strong {
+        font-weight: 700;
+    }
+
+.pct-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.streak-w {
+    color: #2ecc71;
+    font-weight: bold;
+}
+
+.streak-l {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Highlight the Top 4 Teams (Playoff spots) */
+tr:nth-child(-n+4) .rank-number {
+    color: #2ecc71;
+}
+
+.btn-group .btn.active {
+    background-color: #222 !important;
+    color: white !important;
+}

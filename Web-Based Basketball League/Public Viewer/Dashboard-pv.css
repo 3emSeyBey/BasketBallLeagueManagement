@@ -1,0 +1,125 @@
+:root {
+    --primary-orange: #f37021;
+    --bg-light: #f9f8f6;
+    --card-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', sans-serif;
+    color: #333;
+}
+
+/* Navbar */
+.navbar {
+    background: white;
+    border-bottom: 1px solid #eee;
+}
+
+.nav-link {
+    color: #555;
+    font-weight: 500;
+}
+
+    .nav-link.active {
+        color: #000;
+        font-weight: 700;
+    }
+
+.btn-login {
+    background-color: var(--primary-orange);
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+    border: none;
+}
+
+    .btn-login:hover {
+        background-color: #d65d18;
+        color: white;
+    }
+
+/* Dashboard UI */
+.stat-card, .content-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    height: 100%;
+}
+
+.text-orange {
+    color: var(--primary-orange);
+}
+
+.trend-up {
+    color: #2ecc71;
+    font-weight: 600;
+}
+
+.text-muted-extra {
+    font-size: 10px;
+    font-weight: bold;
+    color: #aaa;
+}
+
+/* Table Styling */
+.table thead th {
+    border-bottom: none;
+    color: #999;
+    font-weight: 600;
+    padding-bottom: 1rem;
+}
+
+.venue-badge {
+    background-color: #e9ecef;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.team-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    margin-right: 10px;
+}
+
+/* Announcements */
+.btn-add {
+    border: none;
+    background: transparent;
+    color: var(--primary-orange);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.anno-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .anno-icon.orange {
+        background: #fff4ed;
+    }
+
+    .anno-icon.yellow {
+        background: #fffbed;
+    }
+
+    .anno-icon.green {
+        background: #f0fdf4;
+    }
+
+.view-all {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+}

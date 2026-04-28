@@ -1,0 +1,74 @@
+/* Schedule Specific UI */
+
+.date-group-label {
+    font-weight: 700;
+    color: #222;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+    .date-group-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #eee;
+        margin-left: 15px;
+    }
+
+.game-card {
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 12px;
+}
+
+    .game-card:hover {
+        border-color: #f37021;
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+.time-slot {
+    font-weight: 700;
+    color: #f37021;
+    font-size: 1.1rem;
+}
+
+.vs-divider {
+    font-weight: 800;
+    color: #ddd;
+    font-style: italic;
+    font-size: 0.8rem;
+}
+
+.team-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.venue-tag {
+    background-color: #f1f1f1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.status-changed {
+    color: #dc3545;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: block;
+    margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+    .game-card .row > div {
+        text-align: center !important;
+        margin-bottom: 10px;
+    }
+}

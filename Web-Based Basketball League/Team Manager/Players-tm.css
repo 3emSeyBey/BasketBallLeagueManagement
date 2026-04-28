@@ -1,0 +1,106 @@
+:root {
+    --primary-orange: #f37021;
+    --bg-light: #f9f8f6;
+    --sidebar-bg: #d3ccc7;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', sans-serif;
+    color: #333;
+}
+
+/* UI Components */
+.nav-link.active {
+    font-weight: 700;
+    color: #000;
+    border-bottom: 2px solid var(--primary-orange);
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.content-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+/* Table Status Tags */
+.status-tag {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.status-active {
+    background: #e6f9ed;
+    color: #2ecc71;
+}
+
+.status-pending {
+    background: #fff5eb;
+    color: #f37021;
+}
+
+/* Sidebar Logic */
+.side-menu {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100%;
+    background: var(--sidebar-bg);
+    z-index: 2000;
+    transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+    .side-menu.open {
+        right: 0;
+    }
+
+.menu-link {
+    text-decoration: none;
+    color: #000;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.menu-footer {
+    margin-top: auto;
+}
+
+.btn-logout {
+    background: var(--primary-orange);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.2);
+    z-index: 1999;
+    display: none;
+}
+
+    .overlay.active {
+        display: block;
+    }

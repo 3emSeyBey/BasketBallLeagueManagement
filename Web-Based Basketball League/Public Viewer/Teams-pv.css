@@ -1,0 +1,99 @@
+:root {
+    --primary-orange: #f37021;
+    --bg-light: #f9f8f6;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', sans-serif;
+    color: #333;
+}
+
+/* Nav Styles */
+.nav-link {
+    font-weight: 500;
+    color: #555;
+    transition: color 0.2s;
+}
+
+    .nav-link.active {
+        font-weight: 700;
+        color: #000;
+        border-bottom: 2px solid var(--primary-orange);
+    }
+
+.btn-login {
+    background: var(--primary-orange);
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    transition: opacity 0.2s;
+}
+
+    .btn-login:hover {
+        opacity: 0.9;
+        color: white;
+    }
+
+/* Filter Bar */
+.content-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.filter-btn {
+    border-radius: 20px;
+    padding: 6px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    background: white;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+    .filter-btn.active {
+        background: var(--primary-orange);
+        color: white;
+        border-color: var(--primary-orange);
+    }
+
+/* Team Card Styles */
+.team-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    height: 100%;
+}
+
+    .team-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+.team-logo-lg {
+    font-size: 3rem;
+    background: #f8f9fa;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+}
+
+.text-muted-extra {
+    font-size: 0.65rem;
+    color: #adb5bd;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+#teams-grid {
+    transition: opacity 0.2s ease;
+}

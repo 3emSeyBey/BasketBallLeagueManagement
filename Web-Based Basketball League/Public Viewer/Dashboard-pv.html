@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball League - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard-pv.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="dashboard-pv.html">
+                <div class="logo-icon me-2">🏀</div>
+                <span class="fw-bold">Basketball League</span>
+            </a>
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav gap-4">
+                    <li class="nav-item"><a class="nav-link active" href="dashboard-pv.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="teams-pv.html">Teams</a></li>
+                    <li class="nav-item"><a class="nav-link" href="schedule-pv.html">Schedule</a></li>
+                    <li class="nav-item"><a class="nav-link" href="standings-pv.html">Standings</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-login px-4 py-2">LOGIN</button>
+        </div>
+    </nav>
+
+    <div class="main-container container py-5">
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase text-muted small fw-bold">Total Teams</p>
+                            <h2 class="fw-bold m-0">24</h2>
+                            <span class="trend-up small">↗ +2 this month</span>
+                        </div>
+                        <span class="icon-bg opacity-50">👥</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase text-muted small fw-bold">Active Seasons</p>
+                            <h2 class="fw-bold m-0">2</h2>
+                            <p class="text-muted small mb-0">Summer & Fall '24</p>
+                        </div>
+                        <span class="icon-bg opacity-50">🏆</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase text-muted small fw-bold">Upcoming Games</p>
+                            <h2 class="fw-bold m-0">15</h2>
+                            <span class="text-orange small">Next 7 days</span>
+                        </div>
+                        <span class="icon-bg opacity-50">🏟️</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase text-muted small fw-bold">Total Players</p>
+                            <h2 class="fw-bold m-0">280</h2>
+                            <span class="trend-up small">✅ 98% Registered</span>
+                        </div>
+                        <span class="icon-bg opacity-50">👤</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="content-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">Upcoming Matches</h5>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="text-muted small text-uppercase">
+                                <tr>
+                                    <th>Home Team</th>
+                                    <th>Away Team</th>
+                                    <th>Date & Time</th>
+                                    <th>Venue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="match-table-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="content-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">Announcements</h5>
+                    </div>
+
+                    <div class="announcement-list">
+                        <div class="announcement-item d-flex gap-3 mb-4">
+                            <div class="anno-icon orange">📢</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Winter Season Registration Open</h6>
+                                <p class="text-muted small mb-1">Teams can now register for the upcoming League 2026 season...</p>
+                                <small class="text-uppercase text-muted-extra">2 Hours Ago</small>
+                            </div>
+                        </div>
+                        <div class="announcement-item d-flex gap-3 mb-4">
+                            <div class="anno-icon yellow">ℹ️</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Venue Change: Bantayan</h6>
+                                <p class="text-muted small mb-1">The game scheduled for Oct 14 has been moved to Court M...</p>
+                                <small class="text-uppercase text-muted-extra">1 Day Ago</small>
+                            </div>
+                        </div>
+                        <div class="announcement-item d-flex gap-3 mb-4">
+                            <div class="anno-icon green">✔️</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Referee Training Completion</h6>
+                                <p class="text-muted small mb-1">All 15 league referees have completed the updated safety course...</p>
+                                <small class="text-uppercase text-muted-extra">3 Days Ago</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-outline-secondary w-100 mt-2 py-2">Manage All Posts</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard-pv.js"></script>
+</body>
+</html>
