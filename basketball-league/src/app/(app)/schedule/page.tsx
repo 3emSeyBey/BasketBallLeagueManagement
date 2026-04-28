@@ -19,13 +19,13 @@ export default async function SchedulePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Game Schedule</h1>
           <p className="text-muted-foreground">{allMatches.length} matches</p>
         </div>
         {session.role === "admin" && season && (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <GenerateScheduleDialog seasonId={season.id} />
             <Link
               href="/schedule/new"
@@ -40,7 +40,8 @@ export default async function SchedulePage() {
         )}
       </div>
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[640px]">
           <thead className="bg-muted text-xs uppercase text-muted-foreground">
             <tr>
               <th className="p-3">Date</th>
@@ -69,6 +70,7 @@ export default async function SchedulePage() {
             )}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

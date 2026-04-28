@@ -17,7 +17,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="size-16 rounded-xl bg-muted grid place-items-center text-2xl">🏀</div>
           <div>

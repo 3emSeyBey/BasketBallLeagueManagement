@@ -6,7 +6,8 @@ export function StandingsTable({ title, rows }: { title: string; rows: StandingR
     <div className="space-y-3">
       <h2 className="font-semibold text-primary">{title}</h2>
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[640px]">
           <thead className="bg-muted text-xs uppercase text-muted-foreground">
             <tr>
               <th className="p-3">Pos</th><th className="p-3">Team</th>
@@ -30,6 +31,7 @@ export function StandingsTable({ title, rows }: { title: string; rows: StandingR
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

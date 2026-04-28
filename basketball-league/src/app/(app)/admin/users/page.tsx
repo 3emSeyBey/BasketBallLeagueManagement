@@ -21,7 +21,8 @@ export default async function AdminUsers() {
         <CreateUserForm teams={allTeams}/>
       </Card>
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[640px]">
           <thead className="bg-muted text-xs uppercase text-muted-foreground">
             <tr><th className="p-3">Email</th><th className="p-3">Role</th><th className="p-3">Team</th></tr>
           </thead>
@@ -35,6 +36,7 @@ export default async function AdminUsers() {
             ))}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );

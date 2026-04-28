@@ -15,7 +15,8 @@ export default async function PublicSchedule() {
     <div className="space-y-6">
       <h1 className="text-3xl font-semibold">Schedule</h1>
       <Card className="p-0 overflow-hidden">
-        <table className="w-full text-left">
+        <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[640px]">
           <thead className="bg-muted text-xs uppercase text-muted-foreground">
             <tr>
               <th className="p-3">Date</th>
@@ -49,6 +50,7 @@ export default async function PublicSchedule() {
             )}
           </tbody>
         </table>
+        </div>
       </Card>
     </div>
   );
