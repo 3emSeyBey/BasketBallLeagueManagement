@@ -11,6 +11,8 @@ const Create = z.object({
   name: z.string().min(2).max(80),
   jerseyNumber: z.number().int().min(0).max(99),
   position: z.enum(["PG", "SG", "SF", "PF", "C"]),
+  height: z.string().max(20).optional(),
+  contactNumber: z.string().max(40).optional(),
 });
 
 export async function GET(req: Request) {
@@ -28,6 +30,13 @@ export async function POST(req: Request) {
   const parsed = Create.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   if (!canManageTeam(session, parsed.data.teamId)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const [row] = await db.insert(players).values(parsed.data).returning();
+  const [row] = await db.insert(players).values({
+    teamId: parsed.data.teamId,
+    name: parsed.data.name,
+    jerseyNumber: parsed.data.jerseyNumber,
+    position: parsed.data.position,
+    height: parsed.data.height || null,
+    contactNumber: parsed.data.contactNumber || null,
+  }).returning({ id: players.id });
   return NextResponse.json(row, { status: 201 });
 }

@@ -11,8 +11,8 @@ export function MatchRow({
   teamById: Map<number, Team>;
   linkPrefix?: string;
 }) {
-  const home = teamById.get(m.homeTeamId);
-  const away = teamById.get(m.awayTeamId);
+  const home = m.homeTeamId !== null ? teamById.get(m.homeTeamId) : undefined;
+  const away = m.awayTeamId !== null ? teamById.get(m.awayTeamId) : undefined;
   const date = new Date(m.scheduledAt);
   const variant =
     m.status === "live" ? "default" : m.status === "final" ? "secondary" : "outline";
@@ -23,7 +23,7 @@ export function MatchRow({
         {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </td>
       <td className="p-3 font-medium">
-        {home?.name} vs {away?.name}
+        {home?.name ?? "TBD"} vs {away?.name ?? "TBD"}
       </td>
       <td className="p-3 text-sm text-muted-foreground">{m.venue}</td>
       <td className="p-3">

@@ -1,5 +1,5 @@
 type TeamLite = { id: number; name: string; division: "A" | "B" };
-type MatchLite = { id: number; homeTeamId: number; awayTeamId: number; status: "scheduled"|"live"|"final"; homeScore: number; awayScore: number };
+type MatchLite = { id: number; homeTeamId: number | null; awayTeamId: number | null; status: "scheduled"|"live"|"final"; homeScore: number; awayScore: number };
 
 export type StandingRow = {
   teamId: number;
@@ -21,6 +21,7 @@ export function computeStandings(teams: TeamLite[], matches: MatchLite[]): Stand
   }));
 
   matches.filter(m => m.status === "final").forEach(m => {
+    if (m.homeTeamId == null || m.awayTeamId == null) return;
     const h = rows.get(m.homeTeamId); const a = rows.get(m.awayTeamId);
     if (!h || !a) return;
     h.gamesPlayed++; a.gamesPlayed++;

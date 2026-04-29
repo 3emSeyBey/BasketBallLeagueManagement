@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
@@ -6,16 +7,22 @@ import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { MatchRow } from "@/components/schedule/MatchRow";
 import { GenerateScheduleDialog } from "@/components/schedule/GenerateScheduleDialog";
+import { BracketReadView } from "@/components/canvas/BracketReadView";
+import { loadCanvas } from "@/lib/season-bracket-query";
+
+export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
   const session = (await getSession())!;
-  const [allMatches, allTeams, seasonRows] = await Promise.all([
+  const [allMatches, allTeams, seasonRows, activeSeason] = await Promise.all([
     db.select().from(matches).orderBy(matches.scheduledAt),
     db.select().from(teams),
     db.select().from(seasons).limit(1),
+    db.query.seasons.findFirst({ where: eq(seasons.status, "active") }),
   ]);
   const season = seasonRows[0];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
+  const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 
   return (
     <div className="space-y-6">
@@ -36,9 +43,30 @@ export default async function SchedulePage() {
             >
               + Create Match
             </Link>
+            {activeSeason && (
+              <Link
+                href={`/admin/seasons/${activeSeason.id}/canvas`}
+                className={buttonVariants({ variant: "outline" })}
+              >
+                Open canvas
+              </Link>
+            )}
           </div>
         )}
       </div>
+
+      {view && activeSeason && (view.divisions.length > 0 || view.finals.matches.length > 0) && (
+        <Card className="p-6 space-y-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="font-semibold">Bracket — {activeSeason.name}</h2>
+            {session.role === "admin" && (
+              <span className="text-xs text-muted-foreground">Open the canvas to edit</span>
+            )}
+          </div>
+          <BracketReadView view={view} />
+        </Card>
+      )}
+
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
         <table className="w-full text-left min-w-[640px]">

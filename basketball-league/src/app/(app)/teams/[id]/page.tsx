@@ -1,10 +1,12 @@
 import { notFound, redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, players } from "@/db/schema";
+import { teams, players, users } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeamForm } from "@/components/teams/TeamForm";
+import { DeleteTeamButton } from "@/components/teams/DeleteTeamButton";
+import { ChangeManagerDialog } from "@/components/teams/ChangeManagerDialog";
 import { getSession } from "@/lib/session";
 
 export default async function TeamDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +15,24 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
   if (!session) redirect("/login");
   const team = await db.query.teams.findFirst({ where: eq(teams.id, Number(id)) });
   if (!team) notFound();
-  const roster = await db.select().from(players).where(eq(players.teamId, team.id)).orderBy(players.jerseyNumber);
+  const [roster, managers] = await Promise.all([
+    db.select({
+      id: players.id,
+      name: players.name,
+      jerseyNumber: players.jerseyNumber,
+      position: players.position,
+      imageMimeType: players.imageMimeType,
+    }).from(players).where(eq(players.teamId, team.id)).orderBy(players.jerseyNumber),
+    db.select({
+        id: users.id,
+        email: users.email,
+        username: users.username,
+        name: users.name,
+        contactNumber: users.contactNumber,
+      })
+      .from(users)
+      .where(and(eq(users.teamId, team.id), eq(users.role, "team_manager"))),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -28,13 +47,44 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
       </div>
 
       <Card className="p-6 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold">Manager</h2>
+          {session.role === "admin" && <ChangeManagerDialog teamId={team.id} />}
+        </div>
+        {managers.length === 0
+          ? <p className="text-sm text-muted-foreground">No manager assigned.</p>
+          : <ul className="space-y-3">
+              {managers.map(m => (
+                <li key={m.id} className="text-sm space-y-1">
+                  <p className="font-medium text-base">{m.name || "(no name)"}</p>
+                  <p className="text-muted-foreground">{m.email} · @{m.username ?? "—"}</p>
+                  {m.contactNumber && <p className="text-muted-foreground">Contact: {m.contactNumber}</p>}
+                </li>
+              ))}
+            </ul>}
+      </Card>
+
+      <Card className="p-6 space-y-4">
         <h2 className="font-semibold">Roster ({roster.length})</h2>
         {roster.length === 0 ? <p className="text-sm text-muted-foreground">No players yet.</p> : (
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {roster.map(p => (
-              <li key={p.id} className="flex items-center justify-between border rounded-md p-3">
-                <span className="font-medium">#{p.jerseyNumber} {p.name}</span>
-                <Badge variant="outline">{p.position}</Badge>
+              <li key={p.id}>
+                <a
+                  href={`/players/${p.id}`}
+                  className="flex items-center justify-between border rounded-md p-3 hover:border-primary transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    {p.imageMimeType ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/api/players/${p.id}/image`} alt={p.name} className="size-9 rounded-full object-cover bg-muted" />
+                    ) : (
+                      <span className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center font-semibold text-xs">#{p.jerseyNumber}</span>
+                    )}
+                    <span className="font-medium">{p.name}</span>
+                  </div>
+                  <Badge variant="outline">{p.position}</Badge>
+                </a>
               </li>
             ))}
           </ul>
@@ -42,10 +92,21 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
       </Card>
 
       {session.role === "admin" && (
-        <Card className="p-6 space-y-4">
-          <h2 className="font-semibold">Edit Team</h2>
-          <TeamForm id={team.id} initial={{ name: team.name, division: team.division, logoUrl: team.logoUrl }} />
-        </Card>
+        <>
+          <Card className="p-6 space-y-4">
+            <h2 className="font-semibold">Edit Team</h2>
+            <TeamForm id={team.id} initial={{ name: team.name, division: team.division }} />
+          </Card>
+          <Card className="p-6 space-y-4 border-destructive/30">
+            <div className="space-y-1">
+              <h2 className="font-semibold text-destructive">Danger zone</h2>
+              <p className="text-sm text-muted-foreground">
+                Removing this team deletes its roster and matches. Assigned team managers become unassigned.
+              </p>
+            </div>
+            <DeleteTeamButton teamId={team.id} teamName={team.name} />
+          </Card>
+        </>
       )}
     </div>
   );

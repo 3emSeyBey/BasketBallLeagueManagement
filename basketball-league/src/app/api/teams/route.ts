@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams } from "@/db/schema";
+import { teams, users } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
   division: z.enum(["A", "B"]),
-  logoUrl: z.string().url().optional(),
+  managerId: z.number().int().positive(),
 });
 
 export async function GET() {
@@ -24,6 +25,16 @@ export async function POST(req: Request) {
   }
   const parsed = Create.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const [row] = await db.insert(teams).values(parsed.data).returning();
+
+  const { managerId, ...teamFields } = parsed.data;
+
+  const manager = await db.query.users.findFirst({ where: eq(users.id, managerId) });
+  if (!manager || manager.role !== "team_manager" || manager.teamId !== null) {
+    return NextResponse.json({ error: "Manager must be an unassigned team manager" }, { status: 400 });
+  }
+
+  const [row] = await db.insert(teams).values(teamFields).returning();
+  await db.update(users).set({ teamId: row.id }).where(eq(users.id, managerId));
+
   return NextResponse.json(row, { status: 201 });
 }

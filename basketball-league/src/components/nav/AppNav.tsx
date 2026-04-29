@@ -22,7 +22,7 @@ const NAV_BY_ROLE: Record<Role, { href: string; label: string }[]> = {
   ],
 };
 
-export function AppNav({ role }: { role: Role }) {
+export function AppNav({ role, username }: { role: Role; username: string }) {
   const items = NAV_BY_ROLE[role];
   const [open, setOpen] = useState(false);
 
@@ -49,7 +49,8 @@ export function AppNav({ role }: { role: Role }) {
             </Link>
           ))}
         </nav>
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">@{username}</span>
           <LogoutButton />
         </div>
         <Button
@@ -76,7 +77,8 @@ export function AppNav({ role }: { role: Role }) {
                 {i.label}
               </Link>
             ))}
-            <div className="pt-2 border-t mt-1">
+            <div className="pt-2 border-t mt-1 flex items-center justify-between gap-3">
+              <span className="text-sm text-muted-foreground px-2">@{username}</span>
               <LogoutButton />
             </div>
           </nav>

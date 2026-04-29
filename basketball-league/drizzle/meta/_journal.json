@@ -8,6 +8,55 @@
       "when": 1777389512233,
       "tag": "0000_icy_white_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777444906835,
+      "tag": "0001_medical_vance_astro",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777447460918,
+      "tag": "0002_lowly_pepper_potts",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1777448688600,
+      "tag": "0003_fuzzy_grandmaster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1777449746049,
+      "tag": "0004_wise_titania",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1777450872067,
+      "tag": "0005_green_romulus",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777457000197,
+      "tag": "0006_panoramic_sally_floyd",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1777460570873,
+      "tag": "0007_yellow_lily_hollister",
+      "breakpoints": true
     }
   ]
 }

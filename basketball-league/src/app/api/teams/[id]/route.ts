@@ -9,7 +9,6 @@ import { requireRole, ForbiddenError } from "@/lib/rbac";
 const Update = z.object({
   name: z.string().min(2).max(80).optional(),
   division: z.enum(["A", "B"]).optional(),
-  logoUrl: z.string().url().nullable().optional(),
 });
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {

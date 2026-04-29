@@ -24,8 +24,8 @@ export async function GET(req: Request) {
   const session = await getSession();
   const canPublish =
     session?.role === "admin" ||
-    canManageTeam(session, m.homeTeamId) ||
-    canManageTeam(session, m.awayTeamId);
+    (m.homeTeamId !== null && canManageTeam(session, m.homeTeamId)) ||
+    (m.awayTeamId !== null && canManageTeam(session, m.awayTeamId));
   const role = canPublish ? "publisher" : "subscriber";
   const uid = session?.userId ?? Math.floor(Math.random() * 1_000_000);
 

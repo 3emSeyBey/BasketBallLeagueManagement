@@ -16,14 +16,14 @@ export default async function PublicMatchDetail({
   const { id } = await params;
   const m = await db.query.matches.findFirst({ where: eq(matches.id, Number(id)) });
   if (!m) notFound();
-  const home = await db.query.teams.findFirst({ where: eq(teams.id, m.homeTeamId) });
-  const away = await db.query.teams.findFirst({ where: eq(teams.id, m.awayTeamId) });
+  const home = m.homeTeamId ? await db.query.teams.findFirst({ where: eq(teams.id, m.homeTeamId) }) : null;
+  const away = m.awayTeamId ? await db.query.teams.findFirst({ where: eq(teams.id, m.awayTeamId) }) : null;
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">
-            {home?.name} vs {away?.name}
+            {home?.name ?? "TBD"} vs {away?.name ?? "TBD"}
           </h1>
           <p className="text-muted-foreground">
             {new Date(m.scheduledAt).toLocaleString()} · {m.venue}
