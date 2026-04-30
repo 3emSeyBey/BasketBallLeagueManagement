@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"next dev\")",
+      "Bash(timeout 35 npm run dev)",
+      "Bash(pkill -f \"next\")",
+      "Bash(nohup npm *)",
+      "Bash(echo \"dev pid: $!\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@league.test\",\"password\":\"admin123\"}' -c /tmp/c_a.txt -o /tmp/login_resp.json -w 'login HTTP %{http_code}\\\\n')",
+      "Bash(curl -s http://localhost:3000/dashboard -b /tmp/c_a.txt)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/schedule -b /tmp/c_a.txt)",
+      "Bash(pkill -f \"next-server\")",
+      "Bash(git add *)",
+      "Bash(git -c commit.gpgsign=false commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(curl -s https://basket-ball-league-management.vercel.app/public/schedule)"
+    ]
+  }
+}

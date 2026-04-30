@@ -30,7 +30,7 @@ CREATE TABLE `__new_matches` (
 	FOREIGN KEY (`away_team_id`) REFERENCES `teams`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-INSERT INTO `__new_matches`("id", "season_id", "home_team_id", "away_team_id", "scheduled_at", "venue", "status", "home_score", "away_score", "agora_channel", "round", "bracket_position", "next_match_id", "next_match_slot") SELECT "id", "season_id", "home_team_id", "away_team_id", "scheduled_at", "venue", "status", "home_score", "away_score", "agora_channel", "round", "bracket_position", "next_match_id", "next_match_slot" FROM `matches`;--> statement-breakpoint
+INSERT INTO `__new_matches`("id", "season_id", "home_team_id", "away_team_id", "scheduled_at", "venue", "status", "home_score", "away_score", "agora_channel") SELECT "id", "season_id", "home_team_id", "away_team_id", "scheduled_at", "venue", "status", "home_score", "away_score", "agora_channel" FROM `matches`;--> statement-breakpoint
 DROP TABLE `matches`;--> statement-breakpoint
 ALTER TABLE `__new_matches` RENAME TO `matches`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint

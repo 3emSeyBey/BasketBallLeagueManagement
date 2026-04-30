@@ -86,47 +86,176 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --background: oklch(0.145 0.018 260);
+  --foreground: oklch(0.97 0.005 260);
+  --card: oklch(0.205 0.02 260);
+  --card-foreground: oklch(0.97 0.005 260);
+  --popover: oklch(0.215 0.022 260);
+  --popover-foreground: oklch(0.97 0.005 260);
   --primary: #f37021;
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --secondary: oklch(0.27 0.02 260);
+  --secondary-foreground: oklch(0.97 0.005 260);
+  --muted: oklch(0.245 0.018 260);
+  --muted-foreground: oklch(0.72 0.015 260);
+  --accent: oklch(0.30 0.04 30);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --destructive: oklch(0.66 0.21 25);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: #f37021;
+  --chart-1: #f37021;
+  --chart-2: #38bdf8;
+  --chart-3: #a78bfa;
+  --chart-4: #34d399;
+  --chart-5: #f472b6;
+  --sidebar: oklch(0.18 0.018 260);
+  --sidebar-foreground: oklch(0.97 0.005 260);
+  --sidebar-primary: #f37021;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: oklch(0.27 0.02 260);
+  --sidebar-accent-foreground: oklch(0.97 0.005 260);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: #f37021;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100dvh;
+    background-color: oklch(0.13 0.018 260);
+    background-image:
+      radial-gradient(1100px 600px at 8% -10%, rgba(243, 112, 33, 0.18), transparent 60%),
+      radial-gradient(900px 520px at 110% 8%, rgba(56, 189, 248, 0.10), transparent 55%),
+      radial-gradient(800px 600px at 50% 120%, rgba(168, 85, 247, 0.10), transparent 55%),
+      linear-gradient(180deg, oklch(0.155 0.02 260) 0%, oklch(0.115 0.018 260) 100%);
+    background-attachment: fixed;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 25%, black 30%, transparent 80%);
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 25%, black 30%, transparent 80%);
+  }
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(1 0 0 / 8%);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(1 0 0 / 14%);
+  }
+  ::selection {
+    background: rgba(243, 112, 33, 0.35);
+    color: #fff;
+  }
+}
+
+/* Custom tournament bracket tree (used in schedule + standings) */
+.bracket-tree {
+  --bracket-line: rgba(255, 255, 255, 0.28);
+  --bracket-gutter: 2.5rem;
+}
+.bracket-tree .bracket-round {
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  margin-right: var(--bracket-gutter);
+  position: relative;
+}
+.bracket-tree .bracket-round:last-child {
+  margin-right: 0;
+}
+.bracket-tree .bracket-round-title {
+  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+.bracket-tree .bracket-matches {
+  display: flex;
+  flex-direction: column;
+  height: var(--bracket-h, 30rem);
+}
+.bracket-tree .bracket-match {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
+  position: relative;
+}
+.bracket-tree .bracket-match-card {
+  width: 100%;
+}
+/* incoming horizontal line: every match in non-first round */
+.bracket-tree .bracket-round:not(:first-child) .bracket-match::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(var(--bracket-gutter) / -2);
+  width: calc(var(--bracket-gutter) / 2);
+  height: 1.5px;
+  background: var(--bracket-line);
+  transform: translateY(-1px);
+}
+/* outgoing horizontal line: every match in non-last round */
+.bracket-tree .bracket-round:not(:last-child) .bracket-match::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: calc(var(--bracket-gutter) / -2);
+  width: calc(var(--bracket-gutter) / 2);
+  height: 1.5px;
+  background: var(--bracket-line);
+  transform: translateY(-1px);
+}
+/* vertical bar joining a pair of matches at mid-gutter */
+.bracket-tree .bracket-vbar {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--bracket-gutter) / -2);
+  width: 1.5px;
+  height: 100%;
+  background: var(--bracket-line);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

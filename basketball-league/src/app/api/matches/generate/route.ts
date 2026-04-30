@@ -9,7 +9,7 @@ import { generateRoundRobin } from "@/lib/matchmaking";
 
 const Body = z.object({
   seasonId: z.number().int().positive(),
-  division: z.enum(["A", "B"]),
+  division: z.string().trim().min(1).max(60),
   startDate: z.string().datetime(),
   daysBetweenGames: z.number().int().min(1).max(14).default(3),
   venue: z.string().min(2).default("Bantayan Sports Complex"),

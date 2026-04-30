@@ -14,15 +14,19 @@ const items = [
 export function PublicNav() {
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-40 bg-card border-b">
+    <header className="sticky top-0 z-40 border-b border-white/5 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         <Link
           href="/"
           className="flex items-center gap-2 font-semibold shrink-0"
           onClick={() => setOpen(false)}
         >
-          <Trophy className="size-5 text-primary" />
-          <span className="hidden sm:inline">Basketball League</span>
+          <span className="grid size-8 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/30">
+            <Trophy className="size-4 text-primary" />
+          </span>
+          <span className="hidden sm:inline bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Basketball League
+          </span>
           <span className="sm:hidden">League</span>
         </Link>
         <nav className="hidden md:flex gap-6 text-sm">
@@ -54,7 +58,7 @@ export function PublicNav() {
         </Button>
       </div>
       {open && (
-        <div className="md:hidden border-t bg-card">
+        <div className="md:hidden border-t border-white/5 bg-background/80 backdrop-blur-xl">
           <nav className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-1">
             {items.map((i) => (
               <Link

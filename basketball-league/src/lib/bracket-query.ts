@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, seasonTeams, teams } from "@/db/schema";
 
-export type BracketTeam = { id: number; name: string; division: "A" | "B" };
+export type BracketTeam = { id: number; name: string; division: string };
 
 export type BracketMatchView = {
   id: number;
@@ -54,7 +54,7 @@ export async function loadBracket(seasonId: number) {
       seed: r.seed ?? 0,
       teamId: r.teamId,
       teamName: r.teamName ?? "Unknown",
-      division: (r.division ?? "A") as "A" | "B",
+      division: r.division ?? "A",
     }));
 
   const bracketMatches: BracketMatchView[] = matchRows

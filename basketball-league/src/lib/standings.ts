@@ -1,10 +1,10 @@
-type TeamLite = { id: number; name: string; division: "A" | "B" };
+type TeamLite = { id: number; name: string; division: string };
 type MatchLite = { id: number; homeTeamId: number | null; awayTeamId: number | null; status: "scheduled"|"live"|"final"; homeScore: number; awayScore: number };
 
 export type StandingRow = {
   teamId: number;
   teamName: string;
-  division: "A" | "B";
+  division: string;
   gamesPlayed: number;
   wins: number;
   losses: number;

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { Volleyball } from "lucide-react";
 import { db } from "@/db/client";
 import { teams, players } from "@/db/schema";
 import { Card } from "@/components/ui/card";
@@ -23,7 +24,18 @@ export default async function PublicTeamDetail({
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
-        <div className="size-16 rounded-xl bg-muted grid place-items-center text-2xl">🏀</div>
+        {team.imageMimeType ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/teams/${team.id}/image`}
+            alt={team.name}
+            className="size-20 rounded-xl object-cover ring-1 ring-white/10 shadow-lg shadow-black/30"
+          />
+        ) : (
+          <span className="grid size-20 place-items-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary">
+            <Volleyball className="size-9" />
+          </span>
+        )}
         <div>
           <h1 className="text-3xl font-semibold">{team.name}</h1>
           <Badge variant="outline">Division {team.division}</Badge>

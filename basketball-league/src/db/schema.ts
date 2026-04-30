@@ -13,10 +13,18 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
+export const teamDivisions = sqliteTable("team_divisions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
+  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
 export const teams = sqliteTable("teams", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
-  division: text("division", { enum: ["A", "B"] }).notNull(),
+  division: text("division").notNull(),
+  imageMimeType: text("image_mime_type"),
+  imageData: blob("image_data", { mode: "buffer" }),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
@@ -131,3 +139,5 @@ export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type AnnouncementImage = typeof announcementImages.$inferSelect;
 export type NewAnnouncementImage = typeof announcementImages.$inferInsert;
+export type TeamDivision = typeof teamDivisions.$inferSelect;
+export type NewTeamDivision = typeof teamDivisions.$inferInsert;

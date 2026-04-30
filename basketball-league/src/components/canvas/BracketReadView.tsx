@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MatchCard } from "./MatchCard";
+import { BracketTree } from "@/components/bracket/BracketTree";
 import type { CanvasView, CanvasMatch } from "@/lib/season-bracket-query";
 
 /**
@@ -12,75 +12,98 @@ import type { CanvasView, CanvasMatch } from "@/lib/season-bracket-query";
 export function BracketReadView({ view }: { view: CanvasView }) {
   return (
     <div className="space-y-6">
-      {view.divisions.map(d => (
-        <Card key={d.id} className="p-5 space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">{d.name}</h2>
-            <span className="text-xs text-muted-foreground">
-              {d.teams.length} teams · {d.locked ? "pool locked" : "pool open"}
-              {d.divisionWinner && ` · winner: ${d.divisionWinner.name}`}
-            </span>
+      {view.divisions.map((d) => (
+        <Card key={d.id} className="p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_rgba(243,112,33,0.7)]" />
+              <h2 className="text-lg font-semibold tracking-tight">{d.name}</h2>
+              <span className="text-xs text-muted-foreground">
+                {d.teams.length} teams ·{" "}
+                {d.locked ? "pool locked" : "pool open"}
+                {d.divisionWinner && ` · winner: ${d.divisionWinner.name}`}
+              </span>
+            </div>
           </div>
           {d.teams.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {d.teams.map(t => (
-                <Badge key={t.team.id} variant={t.status === "permanent_eliminated" ? "outline" : "secondary"}>
+              {d.teams.map((t) => (
+                <Badge
+                  key={t.team.id}
+                  variant={
+                    t.status === "permanent_eliminated" ? "outline" : "secondary"
+                  }
+                  className={
+                    t.status === "permanent_eliminated"
+                      ? "line-through opacity-60"
+                      : ""
+                  }
+                >
                   {t.team.name}
-                  {t.status === "permanent_eliminated" && <span className="ml-1 line-through opacity-60">✗</span>}
                 </Badge>
               ))}
             </div>
           )}
-          <Columns matches={d.matches} />
+          <DivisionBracket matches={d.matches} />
         </Card>
       ))}
 
       {(view.finals.matches.length > 0 || view.finals.teams.length > 0) && (
-        <Card className="p-5 space-y-3 ring-2 ring-primary/30">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">Finals</h2>
-            <span className="text-xs text-muted-foreground">
-              {view.finals.locked ? "pool locked" : "pool open"}
-              {view.finals.championTeam && ` · champion: ${view.finals.championTeam.name}`}
-            </span>
+        <Card className="p-5 sm:p-6 space-y-4 ring-2 ring-primary/30">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_rgba(243,112,33,0.7)]" />
+              <h2 className="text-lg font-semibold tracking-tight">Finals</h2>
+              <span className="text-xs text-muted-foreground">
+                {view.finals.locked ? "pool locked" : "pool open"}
+                {view.finals.championTeam &&
+                  ` · champion: ${view.finals.championTeam.name}`}
+              </span>
+            </div>
           </div>
-          <Columns matches={view.finals.matches} />
+          <DivisionBracket matches={view.finals.matches} />
         </Card>
       )}
     </div>
   );
 }
 
-function Columns({ matches }: { matches: CanvasMatch[] }) {
-  if (matches.length === 0) return <p className="text-xs text-muted-foreground">No matches yet.</p>;
-  const byCol = new Map<number, CanvasMatch[]>();
-  for (const m of matches) {
-    const c = m.round;
-    if (!byCol.has(c)) byCol.set(c, []);
-    byCol.get(c)!.push(m);
+function DivisionBracket({ matches }: { matches: CanvasMatch[] }) {
+  if (matches.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground border border-dashed border-white/10 rounded-md p-4 text-center">
+        No matches yet.
+      </p>
+    );
   }
-  const cols = Array.from(byCol.keys()).sort((a, b) => a - b);
-  const total = cols.length > 0 ? cols[cols.length - 1] : 1;
-  return (
-    <div className="overflow-x-auto">
-      <div className="flex gap-3 min-w-fit pb-1">
-        {cols.map(c => (
-          <div key={c} className="w-56 shrink-0 space-y-2">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{title(c, total)}</p>
-            <div className="space-y-2">
-              {(byCol.get(c) ?? []).map(m => <MatchCard key={m.id} match={m} />)}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+
+  const byRound = new Map<number, CanvasMatch[]>();
+  for (const m of matches) {
+    const arr = byRound.get(m.round) ?? [];
+    arr.push(m);
+    byRound.set(m.round, arr);
+  }
+  const sorted = Array.from(byRound.entries()).sort(([a], [b]) => a - b);
+  const total = sorted.length;
+
+  const rounds = sorted.map(([, ms], idx) => ({
+    title: roundTitle(idx + 1, total, ms),
+    seeds: ms
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((m) => ({ id: m.id, match: m })),
+  }));
+
+  return <BracketTree rounds={rounds} />;
 }
 
-function title(round: number, total: number): string {
-  if (round === 1) return "Pool";
+function roundTitle(round: number, total: number, ms: CanvasMatch[]): string {
+  if (ms.some((m) => m.isSeasonFinal)) return "Championship";
+  if (ms.some((m) => m.isDivisionFinal)) return "Division Final";
   const fromEnd = total - round;
   if (fromEnd === 0) return "Final";
   if (fromEnd === 1) return "Semifinals";
-  return `Round ${round}`;
+  if (fromEnd === 2) return "Quarterfinals";
+  if (round === 1 && total === 1) return "Match";
+  return round === 1 ? "Pool" : `Round ${round}`;
 }

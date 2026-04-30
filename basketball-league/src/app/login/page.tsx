@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Volleyball } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { LoginForm } from "./LoginForm";
 import { listAnnouncements } from "@/lib/announcements-query";
@@ -10,17 +11,24 @@ export default async function LoginPage() {
   const announcements = await listAnnouncements(3);
 
   return (
-    <main className="min-h-dvh bg-muted px-4 py-10">
+    <main className="min-h-dvh px-4 py-10">
       <div className="mx-auto w-full max-w-sm space-y-6">
-        <Card className="p-8 space-y-6">
-          <div className="space-y-1 text-center">
-            <div className="text-3xl">🏀</div>
-            <h1 className="text-2xl font-semibold">Basketball League</h1>
+        <Card className="p-8 space-y-6 ring-1 ring-white/10 shadow-2xl shadow-black/30 bg-card/70 backdrop-blur-xl">
+          <div className="space-y-2 text-center">
+            <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary/15 ring-1 ring-primary/30 shadow-lg shadow-primary/10">
+              <Volleyball className="size-6 text-primary" />
+            </span>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Basketball League
+            </h1>
             <p className="text-sm text-muted-foreground">Sign in to continue</p>
           </div>
           <LoginForm />
           <p className="text-xs text-center text-muted-foreground">
-            Public viewer? <Link href="/" className="text-primary underline">Browse without an account</Link>
+            Public viewer?{" "}
+            <Link href="/" className="text-primary underline-offset-4 hover:underline">
+              Browse without an account
+            </Link>
           </p>
         </Card>
 

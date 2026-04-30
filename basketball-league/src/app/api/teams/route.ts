@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, users } from "@/db/schema";
+import { teams, users, teamDivisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
-  division: z.enum(["A", "B"]),
+  division: z.string().trim().min(1).max(60),
   managerId: z.number().int().positive(),
 });
 
@@ -27,6 +27,11 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const { managerId, ...teamFields } = parsed.data;
+
+  const div = await db.query.teamDivisions.findFirst({
+    where: eq(teamDivisions.name, teamFields.division),
+  });
+  if (!div) return NextResponse.json({ error: "Unknown division" }, { status: 400 });
 
   const manager = await db.query.users.findFirst({ where: eq(users.id, managerId) });
   if (!manager || manager.role !== "team_manager" || manager.teamId !== null) {
