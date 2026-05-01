@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
@@ -14,13 +14,16 @@ export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
   const session = (await getSession())!;
-  const [allMatches, allTeams, seasonRows, activeSeason] = await Promise.all([
+  const [allMatches, allTeams, seasonRows] = await Promise.all([
     db.select().from(matches).orderBy(matches.scheduledAt),
     db.select().from(teams),
-    db.select().from(seasons).limit(1),
-    db.query.seasons.findFirst({ where: eq(seasons.status, "active") }),
+    db.select().from(seasons).orderBy(desc(seasons.id)),
   ]);
   const season = seasonRows[0];
+  // Prefer the currently active season; fall back to the most recent one so
+  // the bracket is still viewable after the season ends.
+  const activeSeason =
+    seasonRows.find((s) => s.status === "active") ?? seasonRows[0] ?? null;
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
   const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 
