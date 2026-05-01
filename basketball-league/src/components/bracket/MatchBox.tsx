@@ -2,8 +2,11 @@
 import Link from "next/link";
 import { CalendarDays, Crown, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type MatchStatus = "scheduled" | "live" | "final";
+import {
+  effectiveMatchStatus,
+  statusLabel,
+  type MatchStatus,
+} from "@/lib/match-status";
 
 type TeamLite = { id: number; name: string } | null;
 
@@ -14,7 +17,7 @@ export type MatchLike = {
   homeScore: number;
   awayScore: number;
   status: MatchStatus;
-  scheduledAt: string;
+  scheduledAt: string | null;
   isDivisionFinal?: boolean;
   isSeasonFinal?: boolean;
 };
@@ -64,28 +67,29 @@ function TeamRow({
 export function MatchBox({
   match,
   href,
+  onClick,
   compact = false,
 }: {
   match: MatchLike;
   href?: string;
+  onClick?: () => void;
   compact?: boolean;
 }) {
-  const homeWin =
-    match.status === "final" && match.homeScore > match.awayScore;
-  const awayWin =
-    match.status === "final" && match.awayScore > match.homeScore;
-  const homeState: "winner" | "loser" | "neutral" =
-    match.status === "final"
-      ? homeWin
-        ? "winner"
-        : "loser"
-      : "neutral";
-  const awayState: "winner" | "loser" | "neutral" =
-    match.status === "final"
-      ? awayWin
-        ? "winner"
-        : "loser"
-      : "neutral";
+  const status = effectiveMatchStatus(match.status, match.scheduledAt);
+  const isEnded = status === "ended";
+  const showLiveScore = status === "live" || status === "started";
+  const homeWin = isEnded && match.homeScore > match.awayScore;
+  const awayWin = isEnded && match.awayScore > match.homeScore;
+  const homeState: "winner" | "loser" | "neutral" = isEnded
+    ? homeWin
+      ? "winner"
+      : "loser"
+    : "neutral";
+  const awayState: "winner" | "loser" | "neutral" = isEnded
+    ? awayWin
+      ? "winner"
+      : "loser"
+    : "neutral";
 
   const isFinalMatch = match.isDivisionFinal || match.isSeasonFinal;
 
@@ -118,7 +122,7 @@ export function MatchBox({
       <div className="p-2 space-y-1.5">
         <TeamRow
           name={match.homeTeam?.name}
-          score={match.status === "final" ? match.homeScore : null}
+          score={isEnded || showLiveScore ? match.homeScore : null}
           state={homeState}
         />
         <div className="relative flex items-center justify-center">
@@ -129,34 +133,48 @@ export function MatchBox({
         </div>
         <TeamRow
           name={match.awayTeam?.name}
-          score={match.status === "final" ? match.awayScore : null}
+          score={isEnded || showLiveScore ? match.awayScore : null}
           state={awayState}
         />
       </div>
       <div className="flex items-center justify-between gap-2 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-t border-white/5">
         <span className="inline-flex items-center gap-1">
           <CalendarDays className="size-3" />
-          {new Date(match.scheduledAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          })}
+          {match.scheduledAt
+            ? new Date(match.scheduledAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })
+            : "TBD"}
         </span>
         <span
           className={cn(
             "inline-flex items-center gap-1 font-semibold",
-            match.status === "live" && "text-red-400",
-            match.status === "final" && "text-emerald-400",
+            status === "live" && "text-red-400",
+            status === "started" && "text-amber-400",
+            status === "ended" && "text-emerald-400",
           )}
         >
-          {match.status === "live" && (
+          {status === "live" && (
             <span className="size-1.5 rounded-full bg-red-500 animate-pulse" />
           )}
-          {match.status}
+          {statusLabel(status)}
         </span>
       </div>
     </div>
   );
 
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+      >
+        {card}
+      </button>
+    );
+  }
   if (href) {
     return (
       <Link

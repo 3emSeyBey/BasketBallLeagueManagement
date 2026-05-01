@@ -31,7 +31,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const source = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
   if (!source) return NextResponse.json({ error: "Source match not found" }, { status: 404 });
-  if (source.status !== "final") {
+  if (source.status !== "ended") {
     return NextResponse.json({ error: "Source match not yet final" }, { status: 409 });
   }
   const winnerOk = source.homeTeamId === parsed.data.teamId || source.awayTeamId === parsed.data.teamId;

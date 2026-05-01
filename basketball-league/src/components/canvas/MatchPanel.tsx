@@ -16,7 +16,8 @@ type Props = {
   onClose: () => void;
 };
 
-function toLocalInput(iso: string): string {
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
   const d = new Date(iso);
   const offset = d.getTimezoneOffset();
   return new Date(d.getTime() - offset * 60_000).toISOString().slice(0, 16);
@@ -34,7 +35,7 @@ function MatchPanelInner({ match, onClose }: { match: CanvasMatch; onClose: () =
   const [venue, setVenue] = useState(match.venue);
   const [homeScore, setHomeScore] = useState(String(match.homeScore));
   const [awayScore, setAwayScore] = useState(String(match.awayScore));
-  const [status, setStatus] = useState<"scheduled" | "live" | "final">(match.status);
+  const [status, setStatus] = useState<"planned" | "scheduled" | "live" | "ended">(match.status as "planned" | "scheduled" | "live" | "ended");
 
   async function patchMatch(body: Record<string, unknown>) {
     setBusy(true);
@@ -54,7 +55,7 @@ function MatchPanelInner({ match, onClose }: { match: CanvasMatch; onClose: () =
 
   async function saveSchedule() {
     const ok = await patchMatch({
-      scheduledAt: new Date(scheduledAt).toISOString(),
+      scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       venue,
     });
     if (ok) { toast.success("Schedule updated"); router.refresh(); }
@@ -139,8 +140,8 @@ function MatchPanelInner({ match, onClose }: { match: CanvasMatch; onClose: () =
     onClose();
   }
 
-  const canPromoteHome = match.status === "final" && match.homeScore > match.awayScore && match.homeTeam !== null;
-  const canPromoteAway = match.status === "final" && match.awayScore > match.homeScore && match.awayTeam !== null;
+  const canPromoteHome = match.status === "ended" && match.homeScore > match.awayScore && match.homeTeam !== null;
+  const canPromoteAway = match.status === "ended" && match.awayScore > match.homeScore && match.awayTeam !== null;
 
   return (
     <Dialog open={true} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -183,18 +184,19 @@ function MatchPanelInner({ match, onClose }: { match: CanvasMatch; onClose: () =
                 <select
                   className="h-8 w-full rounded-lg border border-input bg-transparent text-sm px-2"
                   value={status}
-                  onChange={e=>setStatus(e.target.value as "scheduled" | "live" | "final")}
+                  onChange={e=>setStatus(e.target.value as "planned" | "scheduled" | "live" | "ended")}
                 >
+                  <option value="planned">planned</option>
                   <option value="scheduled">scheduled</option>
                   <option value="live">live</option>
-                  <option value="final">final</option>
+                  <option value="ended">ended</option>
                 </select>
               </div>
             </div>
             <Button size="sm" onClick={saveScore} disabled={busy}>Save score</Button>
           </section>
 
-          {match.status === "final" && (
+          {match.status === "ended" && (
             <section className="space-y-2">
               <h3 className="text-sm font-medium">Advance winner</h3>
               <div className="flex gap-2 flex-wrap">
@@ -222,7 +224,7 @@ function MatchPanelInner({ match, onClose }: { match: CanvasMatch; onClose: () =
             </div>
           </section>
 
-          {match.divisionId === null && match.status === "final" && (
+          {match.divisionId === null && match.status === "ended" && (
             <section className="space-y-2">
               <h3 className="text-sm font-medium">Finals override</h3>
               <p className="text-xs text-muted-foreground">Permanently eliminate the loser of this match.</p>

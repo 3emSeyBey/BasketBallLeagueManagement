@@ -76,7 +76,7 @@ export default async function ManageSeasonPage({ params }: { params: Promise<{ i
 
       <Card className="p-6 space-y-4">
         <h2 className="font-semibold">Bracket preview</h2>
-        <BracketView matches={matches} />
+        <BracketView matches={matches} linkBase="/schedule" />
       </Card>
     </div>
   );

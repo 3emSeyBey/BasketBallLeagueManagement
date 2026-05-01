@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type {
-  CanvasView, CanvasMatch, CanvasDivision, CanvasFinals,
+  CanvasView,
+  CanvasMatch,
+  CanvasDivision,
+  CanvasFinals,
 } from "@/lib/season-bracket-query";
-import { MatchCard } from "./MatchCard";
+import { BracketTree } from "@/components/bracket/BracketTree";
+import type { MatchLike } from "@/components/bracket/MatchBox";
 import { MatchPanel } from "./MatchPanel";
 import { AddMatchDialog } from "./AddMatchDialog";
 import { AddTeamDialog } from "./AddTeamDialog";
@@ -17,12 +21,16 @@ type Props = {
   availableTeamsForSeason: { id: number; name: string }[];
 };
 
-export function SeasonCanvas({ seasonId, view, availableTeamsForSeason }: Props) {
+export function SeasonCanvas({
+  seasonId,
+  view,
+  availableTeamsForSeason,
+}: Props) {
   const [openMatch, setOpenMatch] = useState<CanvasMatch | null>(null);
 
   return (
     <div className="space-y-8">
-      {view.divisions.map(division => (
+      {view.divisions.map((division) => (
         <DivisionCanvas
           key={division.id}
           seasonId={seasonId}
@@ -36,7 +44,7 @@ export function SeasonCanvas({ seasonId, view, availableTeamsForSeason }: Props)
         seasonId={seasonId}
         finals={view.finals}
         divisionWinners={view.divisions
-          .map(d => d.divisionWinner)
+          .map((d) => d.divisionWinner)
           .filter((t): t is { id: number; name: string } => t !== null)}
         onMatchClick={setOpenMatch}
       />
@@ -57,12 +65,7 @@ function DivisionCanvas({
   availableTeamsForSeason: { id: number; name: string }[];
   onMatchClick: (m: CanvasMatch) => void;
 }) {
-  const matchesByColumn = useMemo(() => groupByColumn(division.matches), [division.matches]);
-  const columns = Object.keys(matchesByColumn).map(Number).sort((a, b) => a - b);
-  if (columns.length === 0) columns.push(1); // always render Pool column even when empty
-  const maxRound = columns[columns.length - 1] ?? 1;
-
-  const teamPickerOptions = division.teams.map(t => ({
+  const teamPickerOptions = division.teams.map((t) => ({
     id: t.team.id,
     name: t.team.name,
     status: t.status,
@@ -74,8 +77,10 @@ function DivisionCanvas({
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">{division.name}</h2>
           <p className="text-xs text-muted-foreground">
-            {division.teams.length} teams · pool {division.locked ? "locked" : "open"}
-            {division.divisionWinner && ` · winner: ${division.divisionWinner.name}`}
+            {division.teams.length} teams · pool{" "}
+            {division.locked ? "locked" : "open"}
+            {division.divisionWinner &&
+              ` · winner: ${division.divisionWinner.name}`}
           </p>
         </div>
         <AddTeamDialog
@@ -88,34 +93,13 @@ function DivisionCanvas({
 
       <TeamRoster teams={division.teams} />
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-4 min-w-fit pb-2">
-          {columns.map(col => (
-            <Column
-              key={col}
-              title={columnTitle(col, maxRound)}
-              matches={matchesByColumn[col] ?? []}
-              onMatchClick={onMatchClick}
-              addAction={
-                <AddMatchDialog
-                  seasonId={seasonId}
-                  divisionId={division.id}
-                  stage={col === 1 ? "pool" : "playoff"}
-                  round={col}
-                  triggerLabel="+ Add match"
-                  teamOptions={teamPickerOptions}
-                />
-              }
-            />
-          ))}
-          <ColumnAdder
-            nextRound={maxRound + 1}
-            seasonId={seasonId}
-            divisionId={division.id}
-            teamOptions={teamPickerOptions}
-          />
-        </div>
-      </div>
+      <BracketWithControls
+        matches={division.matches}
+        seasonId={seasonId}
+        divisionId={division.id}
+        teamOptions={teamPickerOptions}
+        onMatchClick={onMatchClick}
+      />
     </Card>
   );
 }
@@ -131,14 +115,14 @@ function FinalsCanvas({
   divisionWinners: { id: number; name: string }[];
   onMatchClick: (m: CanvasMatch) => void;
 }) {
-  const matchesByColumn = useMemo(() => groupByColumn(finals.matches), [finals.matches]);
-  const columns = Object.keys(matchesByColumn).map(Number).sort((a, b) => a - b);
-  if (columns.length === 0) columns.push(1);
-  const maxRound = columns[columns.length - 1] ?? 1;
-
-  const teamOptions = finals.teams.length > 0
-    ? finals.teams.map(t => ({ id: t.team.id, name: t.team.name, status: t.status }))
-    : divisionWinners.map(w => ({ id: w.id, name: w.name }));
+  const teamOptions =
+    finals.teams.length > 0
+      ? finals.teams.map((t) => ({
+          id: t.team.id,
+          name: t.team.name,
+          status: t.status,
+        }))
+      : divisionWinners.map((w) => ({ id: w.id, name: w.name }));
 
   const showFinals = divisionWinners.length > 0 || finals.matches.length > 0;
   if (!showFinals) return null;
@@ -148,125 +132,137 @@ function FinalsCanvas({
       <header className="space-y-1">
         <h2 className="text-xl font-semibold">Finals</h2>
         <p className="text-xs text-muted-foreground">
-          {divisionWinners.length} division winner{divisionWinners.length === 1 ? "" : "s"} · pool {finals.locked ? "locked" : "open"}
+          {divisionWinners.length} division winner
+          {divisionWinners.length === 1 ? "" : "s"} · pool{" "}
+          {finals.locked ? "locked" : "open"}
           {finals.championTeam && ` · champion: ${finals.championTeam.name}`}
         </p>
       </header>
 
       {finals.teams.length > 0 && <TeamRoster teams={finals.teams} />}
 
-      <div className="overflow-x-auto">
-        <div className="flex gap-4 min-w-fit pb-2">
-          {columns.map(col => (
-            <Column
-              key={col}
-              title={columnTitle(col, maxRound)}
-              matches={matchesByColumn[col] ?? []}
-              onMatchClick={onMatchClick}
-              addAction={
-                <AddMatchDialog
-                  seasonId={seasonId}
-                  divisionId={null}
-                  stage={col === 1 ? "pool" : "playoff"}
-                  round={col}
-                  triggerLabel="+ Add match"
-                  teamOptions={teamOptions}
-                />
-              }
-            />
-          ))}
-          <ColumnAdder
-            nextRound={maxRound + 1}
-            seasonId={seasonId}
-            divisionId={null}
-            teamOptions={teamOptions}
-          />
-        </div>
-      </div>
+      <BracketWithControls
+        matches={finals.matches}
+        seasonId={seasonId}
+        divisionId={null}
+        teamOptions={teamOptions}
+        onMatchClick={onMatchClick}
+      />
     </Card>
   );
 }
 
-function Column({
-  title,
+function BracketWithControls({
   matches,
-  onMatchClick,
-  addAction,
-}: {
-  title: string;
-  matches: CanvasMatch[];
-  onMatchClick: (m: CanvasMatch) => void;
-  addAction: React.ReactNode;
-}) {
-  return (
-    <div className="w-64 shrink-0 space-y-3">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground px-1">{title}</p>
-      <div className="space-y-2">
-        {matches.map(m => (
-          <MatchCard key={m.id} match={m} onClick={() => onMatchClick(m)} />
-        ))}
-      </div>
-      {addAction}
-    </div>
-  );
-}
-
-function ColumnAdder({
-  nextRound,
   seasonId,
   divisionId,
   teamOptions,
+  onMatchClick,
 }: {
-  nextRound: number;
+  matches: CanvasMatch[];
   seasonId: number;
   divisionId: number | null;
   teamOptions: { id: number; name: string; status?: string }[];
+  onMatchClick: (m: CanvasMatch) => void;
 }) {
+  const byRound = new Map<number, CanvasMatch[]>();
+  for (const m of matches) {
+    const arr = byRound.get(m.round) ?? [];
+    arr.push(m);
+    byRound.set(m.round, arr);
+  }
+  const sorted = Array.from(byRound.entries()).sort(([a], [b]) => a - b);
+  const total = sorted.length;
+  const maxRound = sorted.length > 0 ? sorted[sorted.length - 1][0] : 0;
+
+  const rounds = sorted.map(([round, ms]) => ({
+    title: roundTitle(round, total, ms),
+    seeds: ms
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((m) => ({
+        id: m.id,
+        match: m as unknown as MatchLike,
+        onClick: () => onMatchClick(m),
+      })),
+  }));
+
   return (
-    <div className="w-64 shrink-0 space-y-3 border border-dashed rounded-md p-3 text-center">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">Round {nextRound}</p>
-      <p className="text-xs text-muted-foreground">Empty</p>
-      <AddMatchDialog
-        seasonId={seasonId}
-        divisionId={divisionId}
-        stage="playoff"
-        round={nextRound}
-        triggerLabel={`+ Add to round ${nextRound}`}
-        teamOptions={teamOptions}
-      />
+    <div className="space-y-3">
+      {rounds.length > 0 ? (
+        <BracketTree rounds={rounds} />
+      ) : (
+        <p className="text-sm text-muted-foreground border border-dashed border-white/10 rounded-md p-4 text-center">
+          No matches yet. Add the first match below.
+        </p>
+      )}
+
+      <div className="flex flex-wrap gap-2 pt-1 border-t border-white/5">
+        {sorted.map(([round]) => (
+          <AddMatchDialog
+            key={round}
+            seasonId={seasonId}
+            divisionId={divisionId}
+            stage={round === 1 ? "pool" : "playoff"}
+            round={round}
+            triggerLabel={`+ Add to ${roundShort(round, total)}`}
+            teamOptions={teamOptions}
+          />
+        ))}
+        <AddMatchDialog
+          seasonId={seasonId}
+          divisionId={divisionId}
+          stage={maxRound === 0 ? "pool" : "playoff"}
+          round={maxRound + 1}
+          triggerLabel={`+ Add round ${maxRound + 1}`}
+          teamOptions={teamOptions}
+        />
+      </div>
     </div>
   );
 }
 
-function TeamRoster({ teams }: { teams: { team: { id: number; name: string }; status: string }[] }) {
+function TeamRoster({
+  teams,
+}: {
+  teams: { team: { id: number; name: string }; status: string }[];
+}) {
   if (teams.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-2">
-      {teams.map(t => (
-        <Badge key={t.team.id} variant={t.status === "permanent_eliminated" ? "outline" : "secondary"}>
+      {teams.map((t) => (
+        <Badge
+          key={t.team.id}
+          variant={t.status === "permanent_eliminated" ? "outline" : "secondary"}
+        >
           {t.team.name}
-          {t.status === "tentative_eliminated" && <span className="ml-1 text-amber-600">⚠</span>}
-          {t.status === "permanent_eliminated" && <span className="ml-1 line-through opacity-60">✗</span>}
+          {t.status === "tentative_eliminated" && (
+            <span className="ml-1 text-amber-600">⚠</span>
+          )}
+          {t.status === "permanent_eliminated" && (
+            <span className="ml-1 line-through opacity-60">✗</span>
+          )}
         </Badge>
       ))}
     </div>
   );
 }
 
-function groupByColumn(ms: CanvasMatch[]): Record<number, CanvasMatch[]> {
-  const out: Record<number, CanvasMatch[]> = {};
-  for (const m of ms) {
-    const col = m.round;
-    if (!out[col]) out[col] = [];
-    out[col].push(m);
-  }
-  return out;
-}
-
-function columnTitle(col: number, total: number): string {
-  if (col === 1) return "Pool";
-  const fromEnd = total - col;
+function roundTitle(round: number, total: number, ms: CanvasMatch[]): string {
+  if (ms.some((m) => m.isSeasonFinal)) return "Championship";
+  if (ms.some((m) => m.isDivisionFinal)) return "Division Final";
+  const fromEnd = total - round;
   if (fromEnd === 0) return "Final";
   if (fromEnd === 1) return "Semifinals";
-  return `Round ${col}`;
+  if (fromEnd === 2) return "Quarterfinals";
+  if (round === 1 && total === 1) return "Match";
+  return round === 1 ? "Pool" : `Round ${round}`;
+}
+
+function roundShort(round: number, total: number): string {
+  const fromEnd = total - round;
+  if (fromEnd === 0) return "Final";
+  if (fromEnd === 1) return "SF";
+  if (fromEnd === 2) return "QF";
+  return round === 1 ? "Pool" : `R${round}`;
 }

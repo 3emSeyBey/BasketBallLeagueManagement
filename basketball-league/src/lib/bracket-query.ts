@@ -12,8 +12,8 @@ export type BracketMatchView = {
   awayTeam: BracketTeam | null;
   homeScore: number;
   awayScore: number;
-  status: "scheduled" | "live" | "final";
-  scheduledAt: string;
+  status: "planned" | "scheduled" | "started" | "live" | "ended";
+  scheduledAt: string | null;
 };
 
 export async function loadBracket(seasonId: number) {

@@ -40,7 +40,7 @@ export async function computeDivisionStatus(
   let lostInPool = false;
   let lostInPlayoff = false;
   for (const m of teamMatches) {
-    if (m.status !== "final") continue;
+    if (m.status !== "ended") continue;
     const isHome = m.homeTeamId === teamId;
     const isAway = m.awayTeamId === teamId;
     if (!isHome && !isAway) continue;
@@ -89,7 +89,7 @@ export async function computeFinalsStatus(
   let lostInPool = false;
   let lostInPlayoff = false;
   for (const m of finalsMatches.filter(x => x.stage !== null)) {
-    if (m.status !== "final") continue;
+    if (m.status !== "ended") continue;
     const isHome = m.homeTeamId === teamId;
     const isAway = m.awayTeamId === teamId;
     if (!isHome && !isAway) continue;

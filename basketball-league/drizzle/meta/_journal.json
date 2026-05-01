@@ -64,6 +64,13 @@
       "when": 1777567181206,
       "tag": "0008_married_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1777648214114,
+      "tag": "0009_abnormal_otto_octavius",
+      "breakpoints": true
     }
   ]
 }

@@ -93,7 +93,12 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
                     ) : (
                       <span className="size-9 rounded-full bg-primary/10 text-primary grid place-items-center font-semibold text-xs">#{p.jerseyNumber}</span>
                     )}
-                    <span className="font-medium">{p.name}</span>
+                    <span className="font-medium">
+                      {p.name}
+                      <span className="ml-1.5 text-muted-foreground/70 font-normal">
+                        #{p.jerseyNumber}
+                      </span>
+                    </span>
                   </div>
                   <Badge variant="outline">{p.position}</Badge>
                 </a>

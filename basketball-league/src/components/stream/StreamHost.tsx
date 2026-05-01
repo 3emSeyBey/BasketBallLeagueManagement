@@ -7,9 +7,12 @@ import type {
   ICameraVideoTrack,
   IMicrophoneAudioTrack,
 } from "agora-rtc-sdk-ng";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Camera,
+  CheckCircle2,
   Loader2,
   Mic,
   MicOff,
@@ -30,9 +33,55 @@ const QUALITY_LABELS: Record<QualityPreset, string> = {
   "1080p_2": "1080p · High",
 };
 
-export function StreamHost({ matchId }: { matchId: number }) {
+export function StreamHost({
+  matchId,
+  initialStatus,
+}: {
+  matchId: number;
+  initialStatus?: "planned" | "scheduled" | "started" | "live" | "ended";
+}) {
+  const router = useRouter();
   const [phase, setPhase] = useState<"setup" | "starting" | "live">("setup");
   const [error, setError] = useState<string | null>(null);
+  const [matchEnded, setMatchEnded] = useState(initialStatus === "ended");
+  const [endingMatch, setEndingMatch] = useState(false);
+
+  const isResumable = initialStatus === "live";
+  const matchEndedRef = useRef(initialStatus === "ended");
+
+  async function patchStatus(status: "live" | "started" | "ended") {
+    try {
+      await fetch(`/api/matches/${matchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+        keepalive: true,
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
+  async function endMatch() {
+    if (!confirm("End the match and mark current score as final?")) return;
+    setEndingMatch(true);
+    if (phase === "live") await teardown();
+    setPhase("setup");
+    const res = await fetch(`/api/matches/${matchId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ended" }),
+    });
+    setEndingMatch(false);
+    if (!res.ok) {
+      toast.error("Failed to end match");
+      return;
+    }
+    matchEndedRef.current = true;
+    setMatchEnded(true);
+    toast.success("Match ended. Score marked as final.");
+    router.refresh();
+  }
 
   const [source, setSource] = useState<Source>("camera");
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
@@ -182,6 +231,7 @@ export function StreamHost({ matchId }: { matchId: number }) {
       setMicOn(true);
       setCamOn(true);
       setPhase("live");
+      void patchStatus("live");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to start stream";
       setError(msg);
@@ -216,6 +266,7 @@ export function StreamHost({ matchId }: { matchId: number }) {
   async function stop() {
     await teardown();
     setPhase("setup");
+    if (!matchEndedRef.current) void patchStatus("started");
   }
 
   async function switchSource(next: Source) {
@@ -332,6 +383,34 @@ export function StreamHost({ matchId }: { matchId: number }) {
     [],
   );
 
+  // Revert match status to "started" if the host closes/refreshes mid-stream.
+  useEffect(() => {
+    if (phase !== "live") return;
+    const handler = () => {
+      if (matchEndedRef.current) return;
+      try {
+        const blob = new Blob([JSON.stringify({ status: "started" })], {
+          type: "application/json",
+        });
+        // Use fetch with keepalive (sendBeacon would only do POST).
+        void fetch(`/api/matches/${matchId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: blob,
+          keepalive: true,
+        });
+      } catch {
+        // best-effort
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    window.addEventListener("pagehide", handler);
+    return () => {
+      window.removeEventListener("beforeunload", handler);
+      window.removeEventListener("pagehide", handler);
+    };
+  }, [phase, matchId]);
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -440,6 +519,34 @@ export function StreamHost({ matchId }: { matchId: number }) {
         </p>
       )}
 
+      {phase === "setup" && isResumable && !matchEnded && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2 text-sm">
+          <p className="font-semibold text-amber-200">
+            Match is marked Live but the broadcast is not active.
+          </p>
+          <p className="text-amber-200/80 text-xs">
+            Resume to reattach to the existing channel and continue
+            streaming, or pause to revert status to Starting.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <Button
+              onClick={start}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Radio className="mr-1.5 size-4" />
+              Resume Live Stream
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void patchStatus("started")}
+            >
+              Mark as Starting
+            </Button>
+          </div>
+        </div>
+      )}
+
       {phase === "setup" && (
         <div className="rounded-xl border bg-card/50 p-4 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -546,6 +653,27 @@ export function StreamHost({ matchId }: { matchId: number }) {
             </Button>
           </div>
         </div>
+      )}
+
+      {!matchEnded && (
+        <div className="flex items-center justify-end">
+          <Button
+            type="button"
+            onClick={endMatch}
+            disabled={endingMatch}
+            variant="destructive"
+            size="lg"
+            className="gap-2"
+          >
+            <CheckCircle2 className="size-4" />
+            {endingMatch ? "Ending…" : "End Match"}
+          </Button>
+        </div>
+      )}
+      {matchEnded && (
+        <p className="text-sm text-muted-foreground text-center">
+          Match ended. Score is final.
+        </p>
       )}
 
       {phase === "live" && (

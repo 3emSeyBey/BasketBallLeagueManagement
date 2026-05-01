@@ -12,11 +12,12 @@ import { toast } from "sonner";
 
 type Props = {
   matchId: number;
-  initialScheduledAt: string;
+  initialScheduledAt: string | null;
   initialVenue: string;
 };
 
-function toLocalInput(iso: string): string {
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
   const d = new Date(iso);
   const offset = d.getTimezoneOffset();
   const local = new Date(d.getTime() - offset * 60_000);
@@ -33,12 +34,14 @@ export function ScheduleEditDialog({ matchId, initialScheduledAt, initialVenue }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    const iso = scheduledAt ? new Date(scheduledAt).toISOString() : null;
     const res = await fetch(`/api/matches/${matchId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        scheduledAt: new Date(scheduledAt).toISOString(),
+        scheduledAt: iso,
         venue,
+        status: iso ? "scheduled" : "planned",
       }),
     });
     setBusy(false);
@@ -58,11 +61,23 @@ export function ScheduleEditDialog({ matchId, initialScheduledAt, initialVenue }
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit match schedule</DialogTitle>
-          <DialogDescription>Updates trigger an announcement automatically.</DialogDescription>
+          <DialogDescription>
+            Leave date empty to mark match as planned.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <div className="space-y-2"><Label>Scheduled at</Label><Input type="datetime-local" value={scheduledAt} onChange={(e)=>setScheduledAt(e.target.value)} required /></div>
-          <div className="space-y-2"><Label>Venue</Label><Input value={venue} onChange={(e)=>setVenue(e.target.value)} required minLength={2} /></div>
+          <div className="space-y-2">
+            <Label>Scheduled at</Label>
+            <Input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Venue</Label>
+            <Input value={venue} onChange={(e) => setVenue(e.target.value)} required minLength={2} />
+          </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" type="button" disabled={busy} />}>Cancel</DialogClose>
             <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</Button>

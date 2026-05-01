@@ -9,7 +9,13 @@ import type { CanvasView, CanvasMatch } from "@/lib/season-bracket-query";
  * Read-only renderer for the season bracket canvas. Used on the public
  * standings page and other non-admin surfaces.
  */
-export function BracketReadView({ view }: { view: CanvasView }) {
+export function BracketReadView({
+  view,
+  linkBase = "/schedule",
+}: {
+  view: CanvasView;
+  linkBase?: string;
+}) {
   return (
     <div className="space-y-6">
       {view.divisions.map((d) => (
@@ -44,11 +50,12 @@ export function BracketReadView({ view }: { view: CanvasView }) {
               ))}
             </div>
           )}
-          <DivisionBracket matches={d.matches} />
+          <DivisionBracket matches={d.matches} linkBase={linkBase} />
         </Card>
       ))}
 
-      {(view.finals.matches.length > 0 || view.finals.teams.length > 0) && (
+      {view.divisions.some((d) => d.divisionWinner != null) &&
+        (view.finals.matches.length > 0 || view.finals.teams.length > 0) && (
         <Card className="p-5 sm:p-6 space-y-4 ring-2 ring-primary/30">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -61,14 +68,20 @@ export function BracketReadView({ view }: { view: CanvasView }) {
               </span>
             </div>
           </div>
-          <DivisionBracket matches={view.finals.matches} />
+          <DivisionBracket matches={view.finals.matches} linkBase={linkBase} />
         </Card>
-      )}
+        )}
     </div>
   );
 }
 
-function DivisionBracket({ matches }: { matches: CanvasMatch[] }) {
+function DivisionBracket({
+  matches,
+  linkBase,
+}: {
+  matches: CanvasMatch[];
+  linkBase: string;
+}) {
   if (matches.length === 0) {
     return (
       <p className="text-sm text-muted-foreground border border-dashed border-white/10 rounded-md p-4 text-center">
@@ -91,7 +104,7 @@ function DivisionBracket({ matches }: { matches: CanvasMatch[] }) {
     seeds: ms
       .slice()
       .sort((a, b) => a.id - b.id)
-      .map((m) => ({ id: m.id, match: m })),
+      .map((m) => ({ id: m.id, match: m, href: `${linkBase}/${m.id}` })),
   }));
 
   return <BracketTree rounds={rounds} />;

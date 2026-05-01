@@ -450,7 +450,7 @@ async function seedSeason(opts: {
             .set({
               homeScore: score.home,
               awayScore: score.away,
-              status: "final",
+              status: "ended",
             })
             .where(eq(matches.id, m.id));
           next.push(winner);
@@ -528,7 +528,7 @@ async function seedSeason(opts: {
       .set({
         homeScore: f1.home,
         awayScore: f1.away,
-        status: "final",
+        status: "ended",
       })
       .where(eq(matches.id, fSf1.id));
     await db
@@ -536,7 +536,7 @@ async function seedSeason(opts: {
       .set({
         homeScore: f2.home,
         awayScore: f2.away,
-        status: "final",
+        status: "ended",
       })
       .where(eq(matches.id, fSf2.id));
 
@@ -561,7 +561,7 @@ async function seedSeason(opts: {
       champion.id === fSf1Winner.id ? fSf2Winner : fSf1Winner;
     await db
       .update(matches)
-      .set({ homeScore: cs.home, awayScore: cs.away, status: "final" })
+      .set({ homeScore: cs.home, awayScore: cs.away, status: "ended" })
       .where(eq(matches.id, champ.id));
     await db.insert(announcements).values({
       title: `${champion.name} crowned ${season.name} champions`,

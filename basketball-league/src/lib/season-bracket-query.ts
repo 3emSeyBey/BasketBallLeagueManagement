@@ -21,8 +21,8 @@ export type CanvasMatch = {
   awayTeam: CanvasTeam | null;
   homeScore: number;
   awayScore: number;
-  status: "scheduled" | "live" | "final";
-  scheduledAt: string;
+  status: "planned" | "scheduled" | "started" | "live" | "ended";
+  scheduledAt: string | null;
   venue: string;
   isDivisionFinal: boolean;
   isSeasonFinal: boolean;
@@ -103,7 +103,7 @@ export async function loadCanvas(seasonId: number): Promise<CanvasView> {
     }));
 
     const matchesInDiv = allMatches.filter(m => m.divisionId === d.id).map(toCanvasMatch);
-    const finalsMatch = matchesInDiv.find(m => m.isDivisionFinal && m.status === "final");
+    const finalsMatch = matchesInDiv.find(m => m.isDivisionFinal && m.status === "ended");
     let divisionWinner: CanvasTeam | null = null;
     if (finalsMatch) {
       if (finalsMatch.homeScore > finalsMatch.awayScore) divisionWinner = finalsMatch.homeTeam;
@@ -122,7 +122,7 @@ export async function loadCanvas(seasonId: number): Promise<CanvasView> {
 
   // Finals = matches with divisionId IS NULL
   const finalsMatches = allMatches.filter(m => m.divisionId === null && m.stage !== null).map(toCanvasMatch);
-  const championMatch = finalsMatches.find(m => m.isSeasonFinal && m.status === "final");
+  const championMatch = finalsMatches.find(m => m.isSeasonFinal && m.status === "ended");
   let championTeam: CanvasTeam | null = null;
   if (championMatch) {
     if (championMatch.homeScore > championMatch.awayScore) championTeam = championMatch.homeTeam;

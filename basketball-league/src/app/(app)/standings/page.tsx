@@ -1,28 +1,30 @@
+import Link from "next/link";
 import { eq } from "drizzle-orm";
+import { ChevronRight, Trophy } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, matches, seasons } from "@/db/schema";
+import { teams, matches, teamDivisions } from "@/db/schema";
 import { computeStandings } from "@/lib/standings";
 import { StandingsTable } from "@/components/standings/StandingsTable";
-import { BracketView } from "@/components/bracket/BracketView";
 import { Card } from "@/components/ui/card";
 import { getSession } from "@/lib/session";
-import { loadBracket } from "@/lib/bracket-query";
 
 export const dynamic = "force-dynamic";
 
 export default async function StandingsPage() {
-  const [session, allTeams, allMatches, activeSeason] = await Promise.all([
+  const [session, allTeams, allMatches, divisions] = await Promise.all([
     getSession(),
     db.select().from(teams),
     db.select().from(matches),
-    db.query.seasons.findFirst({ where: eq(seasons.status, "active") }),
+    db.select().from(teamDivisions).orderBy(teamDivisions.name),
   ]);
   const rows = computeStandings(allTeams, allMatches);
-  const a = rows.filter(r => r.division === "A");
-  const b = rows.filter(r => r.division === "B");
   const myTeamId = session?.role === "team_manager" ? session.teamId : null;
 
-  const bracket = activeSeason ? await loadBracket(activeSeason.id) : null;
+  const divisionNames = divisions.map((d) => d.name);
+  const known = new Set(divisionNames);
+  const orphaned = Array.from(
+    new Set(rows.map((r) => r.division).filter((d) => !known.has(d))),
+  ).sort();
 
   return (
     <div className="space-y-8">
@@ -31,18 +33,49 @@ export default async function StandingsPage() {
         <p className="text-muted-foreground">Calculated from final match results</p>
       </div>
 
-      {bracket && bracket.matches.length > 0 && (
-        <Card className="p-6 space-y-4">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">Bracket — {activeSeason!.name}</h2>
-            <span className="text-xs text-muted-foreground">{bracket.seeds.length} teams</span>
+      <Link
+        href="/schedule"
+        className="group block rounded-xl ring-1 ring-primary/30 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent p-5 hover:ring-primary/60 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="grid size-10 place-items-center rounded-lg bg-primary/20 text-primary ring-1 ring-primary/30">
+              <Trophy className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-base font-semibold">View Bracketing</p>
+              <p className="text-xs text-muted-foreground">
+                See the full season bracket on the schedule page
+              </p>
+            </div>
           </div>
-          <BracketView matches={bracket.matches} />
+          <ChevronRight className="size-5 text-primary transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </Link>
+
+      {divisionNames.length === 0 ? (
+        <Card className="p-8 text-sm text-muted-foreground text-center">
+          No divisions yet. Create one from the Teams page.
         </Card>
+      ) : (
+        divisionNames.map((name) => (
+          <StandingsTable
+            key={name}
+            title={name}
+            rows={rows.filter((r) => r.division === name)}
+            highlightTeamId={myTeamId}
+          />
+        ))
       )}
 
-      <StandingsTable title="Division A" rows={a} highlightTeamId={myTeamId} />
-      <StandingsTable title="Division B" rows={b} highlightTeamId={myTeamId} />
+      {orphaned.map((name) => (
+        <StandingsTable
+          key={`orphan-${name}`}
+          title={`${name} (unlinked)`}
+          rows={rows.filter((r) => r.division === name)}
+          highlightTeamId={myTeamId}
+        />
+      ))}
     </div>
   );
 }

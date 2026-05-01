@@ -5,6 +5,7 @@ import { Trophy, Menu, X } from "lucide-react";
 import type { Role } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "./LogoutButton";
+import { UserMenu } from "./UserMenu";
 
 const NAV_BY_ROLE: Record<Role, { href: string; label: string }[]> = {
   admin: [
@@ -54,8 +55,7 @@ export function AppNav({ role, username }: { role: Role; username: string }) {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">@{username}</span>
-          <LogoutButton />
+          <UserMenu username={username} />
         </div>
         <Button
           variant="ghost"
@@ -81,6 +81,13 @@ export function AppNav({ role, username }: { role: Role; username: string }) {
                 {i.label}
               </Link>
             ))}
+            <Link
+              href="/settings"
+              className="py-2 px-2 rounded-md hover:bg-muted text-sm flex items-center gap-2"
+              onClick={() => setOpen(false)}
+            >
+              Settings
+            </Link>
             <div className="pt-2 border-t mt-1 flex items-center justify-between gap-3">
               <span className="text-sm text-muted-foreground px-2">@{username}</span>
               <LogoutButton />

@@ -29,7 +29,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const match = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
   if (!match) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (match.status === "final") {
+  if (match.status === "ended") {
     return NextResponse.json({ error: "Match already finalized" }, { status: 409 });
   }
 

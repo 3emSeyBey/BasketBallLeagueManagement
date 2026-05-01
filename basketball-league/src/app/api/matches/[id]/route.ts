@@ -13,9 +13,9 @@ import {
 } from "@/lib/announcement-events";
 
 const Update = z.object({
-  scheduledAt: z.string().datetime().optional(),
+  scheduledAt: z.string().datetime().nullable().optional(),
   venue: z.string().min(2).max(120).optional(),
-  status: z.enum(["scheduled", "live", "final"]).optional(),
+  status: z.enum(["planned", "scheduled", "started", "live", "ended"]).optional(),
   homeScore: z.number().int().min(0).optional(),
   awayScore: z.number().int().min(0).optional(),
 });
@@ -50,7 +50,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   // Match transitioned to final → advance + announcements
-  if (before.status !== "final" && row.status === "final") {
+  if (before.status !== "ended" && row.status === "ended") {
     await announceMatchResult(idNum);
     const { championTeamId, seasonId } = await advanceBracketWinner(idNum);
     if (championTeamId && seasonId) {

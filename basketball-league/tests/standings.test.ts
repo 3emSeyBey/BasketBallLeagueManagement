@@ -8,8 +8,8 @@ const teams = [
 ];
 
 const matches = [
-  { id: 1, homeTeamId: 1, awayTeamId: 2, status: "final" as const, homeScore: 80, awayScore: 70 },
-  { id: 2, homeTeamId: 2, awayTeamId: 1, status: "final" as const, homeScore: 60, awayScore: 75 },
+  { id: 1, homeTeamId: 1, awayTeamId: 2, status: "ended" as const, homeScore: 80, awayScore: 70 },
+  { id: 2, homeTeamId: 2, awayTeamId: 1, status: "ended" as const, homeScore: 60, awayScore: 75 },
   { id: 3, homeTeamId: 1, awayTeamId: 2, status: "scheduled" as const, homeScore: 0, awayScore: 0 },
 ];
 

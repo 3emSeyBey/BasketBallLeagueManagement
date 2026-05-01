@@ -3,8 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams } from "@/db/schema";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { StreamPlayer } from "@/components/stream/StreamPlayer";
+import { LiveScoreBoard } from "@/components/schedule/LiveScoreBoard";
+import { MatchStatusBadge } from "@/components/schedule/MatchStatusBadge";
+import { effectiveMatchStatus } from "@/lib/match-status";
 
 export const dynamic = "force-dynamic";
 
@@ -26,20 +28,42 @@ export default async function PublicMatchDetail({
             {home?.name ?? "TBD"} vs {away?.name ?? "TBD"}
           </h1>
           <p className="text-muted-foreground">
-            {new Date(m.scheduledAt).toLocaleString()} · {m.venue}
+            {m.scheduledAt
+              ? `${new Date(m.scheduledAt).toLocaleString()} · ${m.venue}`
+              : `Unscheduled · ${m.venue}`}
           </p>
         </div>
-        <Badge>{m.status}</Badge>
+        <MatchStatusBadge
+          matchId={m.id}
+          initialStatus={m.status}
+          initialScheduledAt={m.scheduledAt}
+        />
       </div>
-      <Card className="p-8 text-center">
-        <div className="text-5xl font-semibold tracking-tight">
-          {m.homeScore} <span className="text-muted-foreground mx-3">—</span> {m.awayScore}
-        </div>
-      </Card>
-      <Card className="p-6 space-y-4">
-        <h2 className="font-semibold">Live Stream</h2>
-        <StreamPlayer matchId={m.id} />
-      </Card>
+      {(() => {
+        const effective = effectiveMatchStatus(m.status, m.scheduledAt);
+        if (effective === "planned" || effective === "scheduled") return null;
+        return (
+          <LiveScoreBoard
+            matchId={m.id}
+            homeName={home?.name ?? "Home"}
+            awayName={away?.name ?? "Away"}
+            initialHome={m.homeScore}
+            initialAway={m.awayScore}
+            canEdit={false}
+          />
+        );
+      })()}
+      {(() => {
+        const effective = effectiveMatchStatus(m.status, m.scheduledAt);
+        const showStream = effective === "started" || effective === "live";
+        if (!showStream) return null;
+        return (
+          <Card className="p-6 space-y-4">
+            <h2 className="font-semibold">Live Stream</h2>
+            <StreamPlayer matchId={m.id} />
+          </Card>
+        );
+      })()}
     </div>
   );
 }

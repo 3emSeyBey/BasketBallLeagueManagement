@@ -19,7 +19,7 @@ export async function isDivisionLocked(seasonId: number, divisionId: number): Pr
     ))
     .orderBy(asc(matches.scheduledAt))
     .limit(1);
-  if (!first) return false;
+  if (!first || !first.scheduledAt) return false;
   return new Date(first.scheduledAt).getTime() <= Date.now();
 }
 
@@ -38,6 +38,6 @@ export async function isFinalsLocked(seasonId: number): Promise<boolean> {
     ))
     .orderBy(asc(matches.scheduledAt))
     .limit(1);
-  if (!first) return false;
+  if (!first || !first.scheduledAt) return false;
   return new Date(first.scheduledAt).getTime() <= Date.now();
 }

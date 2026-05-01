@@ -6,6 +6,7 @@ type BracketSeed = {
   id: number;
   match: MatchLike;
   href?: string;
+  onClick?: () => void;
 };
 
 const SLOT_REM = 8.5;
@@ -43,7 +44,12 @@ export function BracketTree({
                   <div key={s.id} className="bracket-match">
                     {drawVbar && <span className="bracket-vbar" />}
                     <div className="bracket-match-card">
-                      <MatchBox match={s.match} href={s.href} compact />
+                      <MatchBox
+                        match={s.match}
+                        href={s.href}
+                        onClick={s.onClick}
+                        compact
+                      />
                     </div>
                   </div>
                 );

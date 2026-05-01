@@ -34,8 +34,20 @@ Web-based management system for the Mayor's Cup Basketball League (Bantayan, Ceb
 
 ## Default credentials (dev seed)
 
-- Admin: `admin@league.test` / `admin123`
-- Team Manager: `manager@league.test` / `manager123`
+Passwords are stored as bcrypt hashes (`users.passwordHash`, cost 10). The seed
+inserts the following accounts. If a user updates their password via
+`/settings`, the seed default no longer works for that account.
+
+| Role          | Username       | Email                   | Password     |
+| ------------- | -------------- | ----------------------- | ------------ |
+| admin         | `admin`        | admin@league.test       | `admin123`   |
+| team_manager  | `sharks_mgr`   | manager@league.test     | `manager123` |
+| team_manager  | `warriors_mgr` | warriors@league.test    | `manager123` |
+| team_manager  | `eagles_mgr`   | eagles@league.test      | `manager123` |
+| team_manager  | `bulls_mgr`    | bulls@league.test       | `manager123` |
+
+The other 12 generated teams have no manager user — only the four NBA-rostered
+teams above ship with a seeded manager.
 
 ## Scripts
 

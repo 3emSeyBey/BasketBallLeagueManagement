@@ -9,7 +9,7 @@ async function systemAuthorId(): Promise<number | null> {
 
 export async function announceMatchResult(matchId: number) {
   const m = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
-  if (!m || m.status !== "final" || m.homeTeamId == null || m.awayTeamId == null) return;
+  if (!m || m.status !== "ended" || m.homeTeamId == null || m.awayTeamId == null) return;
   const [home, away, season] = await Promise.all([
     db.query.teams.findFirst({ where: eq(teams.id, m.homeTeamId) }),
     db.query.teams.findFirst({ where: eq(teams.id, m.awayTeamId) }),
@@ -60,7 +60,7 @@ export async function announceScheduleChange(matchId: number, prevDate: string |
     m.awayTeamId ? db.query.teams.findFirst({ where: eq(teams.id, m.awayTeamId) }) : Promise.resolve(null),
   ]);
   const matchup = `${home?.name ?? "TBD"} vs ${away?.name ?? "TBD"}`;
-  const newDate = new Date(m.scheduledAt).toLocaleString();
+  const newDate = m.scheduledAt ? new Date(m.scheduledAt).toLocaleString() : "TBD";
   const oldDate = prevDate ? new Date(prevDate).toLocaleString() : null;
 
   const lines: string[] = [];
@@ -93,7 +93,7 @@ async function roundLabelAsync(round: number, seasonId: number): Promise<string>
  */
 export async function advanceBracketWinner(matchId: number): Promise<{ championTeamId?: number; seasonId?: number }> {
   const m = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
-  if (!m || m.status !== "final" || m.homeTeamId == null || m.awayTeamId == null) return {};
+  if (!m || m.status !== "ended" || m.homeTeamId == null || m.awayTeamId == null) return {};
   const winnerId = m.homeScore > m.awayScore ? m.homeTeamId : m.awayTeamId;
 
   if (m.nextMatchId == null) {
