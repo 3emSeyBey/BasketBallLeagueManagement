@@ -11,7 +11,7 @@ import { StreamHost } from "@/components/stream/StreamHost";
 import { StreamPlayer } from "@/components/stream/StreamPlayer";
 import { getSession } from "@/lib/session";
 import { canManageTeam } from "@/lib/rbac";
-import { effectiveMatchStatus } from "@/lib/match-status";
+import { effectiveMatchStatus, isSameMatchDay } from "@/lib/match-status";
 
 export default async function MatchDetail({
   params,
@@ -73,7 +73,13 @@ export default async function MatchDetail({
 
       {(() => {
         const effective = effectiveMatchStatus(m.status, m.scheduledAt);
-        const showStream = effective === "started" || effective === "live";
+        const isStartedOrLive = effective === "started" || effective === "live";
+        // Hosts (admin + assigned managers) can prepare the broadcast any
+        // time on the scheduled day, even before the start hour. Viewers
+        // only see the stream once the match has actually started.
+        const hostMayBroadcastEarly =
+          isHost && isSameMatchDay(m.scheduledAt) && m.status !== "ended";
+        const showStream = isStartedOrLive || hostMayBroadcastEarly;
         if (!showStream) return null;
         return (
           <Card className="p-6 space-y-4">

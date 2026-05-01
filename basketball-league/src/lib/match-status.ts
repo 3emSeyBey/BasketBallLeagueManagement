@@ -18,8 +18,7 @@ export const MATCH_STATUSES: MatchStatus[] = [
  *
  * - planned/live/ended pass through.
  * - scheduled is promoted to "started" when the current time falls in the
- *   same hour as scheduledAt (and scheduledAt is not in the future by more
- *   than 60 minutes from now).
+ *   same hour as scheduledAt.
  */
 export function effectiveMatchStatus(
   stored: MatchStatus,
@@ -30,13 +29,30 @@ export function effectiveMatchStatus(
   if (!scheduledAt) return "planned";
   const start = new Date(scheduledAt);
   if (Number.isNaN(start.getTime())) return stored;
-  // Same calendar hour AND same calendar day → "started".
   const sameHour =
     start.getFullYear() === now.getFullYear() &&
     start.getMonth() === now.getMonth() &&
     start.getDate() === now.getDate() &&
     start.getHours() === now.getHours();
   return sameHour ? "started" : stored;
+}
+
+/**
+ * True when scheduledAt falls on the current calendar day. Used by admin
+ * surfaces to unlock the broadcaster panel before the official start hour.
+ */
+export function isSameMatchDay(
+  scheduledAt: string | null,
+  now: Date = new Date(),
+): boolean {
+  if (!scheduledAt) return false;
+  const start = new Date(scheduledAt);
+  if (Number.isNaN(start.getTime())) return false;
+  return (
+    start.getFullYear() === now.getFullYear() &&
+    start.getMonth() === now.getMonth() &&
+    start.getDate() === now.getDate()
+  );
 }
 
 export function statusLabel(s: MatchStatus): string {

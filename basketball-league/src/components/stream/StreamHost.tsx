@@ -231,7 +231,7 @@ export function StreamHost({
       setMicOn(true);
       setCamOn(true);
       setPhase("live");
-      void patchStatus("live");
+      void patchStatus("live").then(() => router.refresh());
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to start stream";
       setError(msg);
@@ -266,7 +266,7 @@ export function StreamHost({
   async function stop() {
     await teardown();
     setPhase("setup");
-    if (!matchEndedRef.current) void patchStatus("started");
+    if (!matchEndedRef.current) void patchStatus("started").then(() => router.refresh());
   }
 
   async function switchSource(next: Source) {
