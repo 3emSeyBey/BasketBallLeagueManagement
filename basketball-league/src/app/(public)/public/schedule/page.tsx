@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams, seasons } from "@/db/schema";
 import { Card } from "@/components/ui/card";
@@ -9,13 +9,19 @@ import { loadCanvas } from "@/lib/season-bracket-query";
 export const dynamic = "force-dynamic";
 
 export default async function PublicSchedule() {
-  const [allMatches, allTeams, seasonRows] = await Promise.all([
-    db.select().from(matches).orderBy(matches.scheduledAt),
+  const [allTeams, seasonRows] = await Promise.all([
     db.select().from(teams),
     db.select().from(seasons).orderBy(desc(seasons.id)),
   ]);
   const activeSeason =
     seasonRows.find((s) => s.status === "active") ?? seasonRows[0] ?? null;
+  const allMatches = activeSeason
+    ? await db
+        .select()
+        .from(matches)
+        .where(eq(matches.seasonId, activeSeason.id))
+        .orderBy(matches.scheduledAt)
+    : [];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
   const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 

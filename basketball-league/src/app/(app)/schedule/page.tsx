@@ -14,8 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SchedulePage() {
   const session = (await getSession())!;
-  const [allMatches, allTeams, seasonRows] = await Promise.all([
-    db.select().from(matches).orderBy(matches.scheduledAt),
+  const [allTeams, seasonRows] = await Promise.all([
     db.select().from(teams),
     db.select().from(seasons).orderBy(desc(seasons.id)),
   ]);
@@ -24,6 +23,14 @@ export default async function SchedulePage() {
   // the bracket is still viewable after the season ends.
   const activeSeason =
     seasonRows.find((s) => s.status === "active") ?? seasonRows[0] ?? null;
+  // Match list mirrors the bracket — only matches from the visible season.
+  const allMatches = activeSeason
+    ? await db
+        .select()
+        .from(matches)
+        .where(eq(matches.seasonId, activeSeason.id))
+        .orderBy(matches.scheduledAt)
+    : [];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
   const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 
