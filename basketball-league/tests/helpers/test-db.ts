@@ -20,12 +20,13 @@ const DDL = [
   );`,
   `CREATE TABLE teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     division_id INTEGER NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
     image_mime_type TEXT,
     image_data BLOB,
     logo_color TEXT,
-    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    UNIQUE(division_id, name)
   );`,
   `CREATE TABLE matches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +39,8 @@ const DDL = [
     status TEXT NOT NULL DEFAULT 'planned',
     home_score INTEGER NOT NULL DEFAULT 0,
     away_score INTEGER NOT NULL DEFAULT 0,
-    agora_channel TEXT
+    agora_channel TEXT,
+    broadcaster_user_id INTEGER
   );`,
   `CREATE TABLE brackets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,6 +57,34 @@ const DDL = [
     round_index INTEGER NOT NULL,
     slot_index INTEGER NOT NULL,
     feeds_into_id INTEGER REFERENCES bracket_matches(id) ON DELETE SET NULL
+  );`,
+  `CREATE TABLE players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    jersey_number INTEGER NOT NULL,
+    position TEXT NOT NULL,
+    height TEXT,
+    contact_number TEXT,
+    image_mime_type TEXT,
+    image_data BLOB,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    UNIQUE(team_id, jersey_number)
+  );`,
+  `CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    username TEXT UNIQUE,
+    name TEXT NOT NULL DEFAULT '',
+    contact_number TEXT,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    team_id INTEGER,
+    requested_team_name TEXT,
+    requested_division_id INTEGER,
+    requested_team_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
 ];
 

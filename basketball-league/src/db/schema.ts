@@ -38,13 +38,15 @@ export const divisions = sqliteTable("divisions", {
 
 export const teams = sqliteTable("teams", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   divisionId: integer("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
   imageMimeType: text("image_mime_type"),
   imageData: blob("image_data", { mode: "buffer" }),
   logoColor: text("logo_color"),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-});
+}, (t) => ({
+  uniqueTeamName: unique().on(t.divisionId, t.name),
+}));
 
 export const players = sqliteTable("players", {
   id: integer("id").primaryKey({ autoIncrement: true }),

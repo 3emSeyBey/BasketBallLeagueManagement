@@ -44,12 +44,13 @@ const CREATE = [
   );`,
   `CREATE TABLE teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
     division_id INTEGER NOT NULL REFERENCES divisions(id) ON DELETE CASCADE,
     image_mime_type TEXT,
     image_data BLOB,
     logo_color TEXT,
-    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    UNIQUE(division_id, name)
   );`,
   `CREATE TABLE players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
