@@ -49,3 +49,6 @@ next-env.d.ts
 
 # playwright session output
 .playwright-mcp/
+
+# Brainstorm visual companion
+.superpowers/
