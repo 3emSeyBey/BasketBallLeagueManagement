@@ -66,7 +66,15 @@ export function StreamPlayer({ matchId }: { matchId: number }) {
         await client.setClientRole("audience", { level: 1 });
 
         client.on("user-published", async (user, mediaType) => {
-          await client.subscribe(user, mediaType);
+          // Ignore events for a client that's been torn down (StrictMode
+          // double-mount / leave race) — subscribing then throws "not joined".
+          if (cancelled) return;
+          try {
+            await client.subscribe(user, mediaType);
+          } catch {
+            return;
+          }
+          if (cancelled) return;
           if (mediaType === "video" && user.videoTrack) {
             remoteUidRef.current = user.uid;
             remoteVideoRef.current = user.videoTrack;
