@@ -295,7 +295,9 @@ export function TeamForm({
             onValueChange={(v) => setDivisionId(v ?? "")}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pick a division" />
+              <SelectValue placeholder="Pick a division">
+                {(v: string) => divisions.find((d) => String(d.id) === v)?.label ?? "Pick a division"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {divisions.map((d) => (
