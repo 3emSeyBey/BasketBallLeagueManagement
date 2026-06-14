@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, ne, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, divisions, brackets } from "@/db/schema";
 import { loadBracketTree, type BracketBox } from "./bracket-service";
@@ -58,6 +58,9 @@ export async function loadScheduleView(opts: {
   }
   const where = and(...conds);
 
+  // Live first, then started, scheduled, planned, ended; date within each.
+  const statusOrder = sql`CASE ${matches.status} WHEN 'live' THEN 0 WHEN 'started' THEN 1 WHEN 'scheduled' THEN 2 WHEN 'planned' THEN 3 ELSE 4 END`;
+
   const total = (await db.select({ c: count() }).from(matches).where(where))[0].c;
   const totalPages = Math.max(1, Math.ceil(total / opts.pageSize));
   const page = Math.min(Math.max(1, opts.page), totalPages);
@@ -65,7 +68,7 @@ export async function loadScheduleView(opts: {
     .select()
     .from(matches)
     .where(where)
-    .orderBy(matches.scheduledAt)
+    .orderBy(statusOrder, asc(matches.scheduledAt))
     .limit(opts.pageSize)
     .offset((page - 1) * opts.pageSize);
 

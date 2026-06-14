@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { desc } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, isNotNull } from "drizzle-orm";
+import { AlertTriangle } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, seasons } from "@/db/schema";
+import { teams, seasons, matches } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { loadScheduleView } from "@/lib/schedule-view";
 import { Card } from "@/components/ui/card";
@@ -53,11 +54,23 @@ export default async function SchedulePage({
         pageSize: PAGE_SIZE,
         publishedOnly: session.role !== "admin",
         teamId: teamFilter,
-        scheduledOnly: isManager,
+        scheduledOnly: true,
       })
     : { matches: [], total: 0, totalPages: 1, page: 1, divisions: [], selectedBracket: null };
 
   const pageQuery = !isManager && divisionId != null ? { division: String(divisionId) } : undefined;
+
+  // Admin: matchups that have both teams but no date yet — nudge to schedule them.
+  const unscheduled = session.role === "admin" && activeSeason
+    ? await db.select().from(matches).where(and(
+        eq(matches.seasonId, activeSeason.id),
+        eq(matches.status, "planned"),
+        isNull(matches.scheduledAt),
+        isNotNull(matches.homeTeamId),
+        isNotNull(matches.awayTeamId),
+        ...(divisionId != null ? [eq(matches.divisionId, divisionId)] : []),
+      )).orderBy(asc(matches.id))
+    : [];
 
   return (
     <div className="space-y-6">
@@ -128,6 +141,40 @@ export default async function SchedulePage({
       </Card>
 
       <SchedulePagination page={view.page} totalPages={view.totalPages} basePath="/schedule" query={pageQuery} />
+
+      {session.role === "admin" && unscheduled.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0" />
+            <div>
+              <p className="font-medium">{unscheduled.length} matchup{unscheduled.length === 1 ? "" : "s"} not scheduled yet.</p>
+              <p className="text-amber-700/80 dark:text-amber-400/80">
+                These have both teams set but no date — set a date so they appear on the public schedule.
+              </p>
+            </div>
+          </div>
+          <Card className="p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[640px]">
+                <thead className="bg-muted text-xs uppercase text-muted-foreground">
+                  <tr>
+                    <th className="p-3">Date</th>
+                    <th className="p-3">Time</th>
+                    <th className="p-3">Matchup</th>
+                    <th className="p-3">Venue</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Score</th>
+                    <th className="p-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {unscheduled.map((m) => <MatchRow key={m.id} m={m} teamById={teamById} />)}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
