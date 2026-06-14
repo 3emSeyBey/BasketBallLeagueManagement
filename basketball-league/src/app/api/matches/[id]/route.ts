@@ -11,6 +11,7 @@ import {
   announceScheduleChange,
 } from "@/lib/announcement-events";
 import { advanceWinner } from "@/lib/bracket-service";
+import { assertSeasonEditable, SeasonLockedError } from "@/lib/season-guard";
 
 const Update = z.object({
   scheduledAt: z.string().datetime().nullable().optional(),
@@ -40,6 +41,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const before = await db.query.matches.findFirst({ where: eq(matches.id, idNum) });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  try { await assertSeasonEditable(before.seasonId); }
+  catch (e) { if (e instanceof SeasonLockedError) return NextResponse.json({ error: e.message }, { status: 409 }); throw e; }
 
   // A bracket match can't end in a tie — there'd be no winner to advance.
   const becomingEnded = before.status !== "ended" && parsed.data.status === "ended";

@@ -33,6 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const season = await db.query.seasons.findFirst({ where: eq(seasons.id, seasonId) });
   if (!season) return NextResponse.json({ error: "Season not found" }, { status: 404 });
+  if (season.status === "ended") return NextResponse.json({ error: "This season is archived and read-only." }, { status: 409 });
 
   const parsed = Create.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

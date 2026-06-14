@@ -6,6 +6,7 @@ import { brackets } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { saveBracket } from "@/lib/bracket-service";
+import { assertBracketEditable, SeasonLockedError } from "@/lib/season-guard";
 
 const Box = z.object({
   bracketMatchId: z.number().int().positive().nullable(),
@@ -32,6 +33,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const exists = await db.query.brackets.findFirst({ where: eq(brackets.id, bracketId) });
   if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  try { await assertBracketEditable(bracketId); }
+  catch (e) { if (e instanceof SeasonLockedError) return NextResponse.json({ error: e.message }, { status: 409 }); throw e; }
 
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });

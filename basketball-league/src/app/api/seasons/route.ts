@@ -5,10 +5,17 @@ import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { importTeams } from "@/lib/season-service";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
-  startedAt: z.string().datetime(),
+  import: z.object({
+    sourceSeasonId: z.number().int().positive(),
+    teams: z.array(z.object({
+      teamId: z.number().int().positive(),
+      includeRoster: z.boolean(),
+    })),
+  }).optional(),
 });
 
 export async function GET() {
@@ -17,8 +24,8 @@ export async function GET() {
 }
 
 /**
- * Create a new empty season in `draft` status. Admins add divisions and teams
- * after creation via /api/seasons/[id]/divisions and /api/seasons/[id]/teams.
+ * Create a new season in `draft` status. The start date is set later at
+ * activation. Optionally imports divisions/teams/rosters from a past season.
  */
 export async function POST(req: Request) {
   try { requireRole(await getSession(), "admin"); }
@@ -27,14 +34,20 @@ export async function POST(req: Request) {
   const parsed = Create.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  let season;
   try {
-    const [season] = await db.insert(seasons).values({
+    [season] = await db.insert(seasons).values({
       name: parsed.data.name,
-      startedAt: parsed.data.startedAt,
+      startedAt: new Date().toISOString(), // placeholder, set on activation
       status: "draft",
     }).returning();
-    return NextResponse.json({ id: season.id }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Season name already exists" }, { status: 409 });
   }
+
+  if (parsed.data.import && parsed.data.import.teams.length > 0) {
+    await importTeams(db, season.id, parsed.data.import.sourceSeasonId, parsed.data.import.teams);
+  }
+
+  return NextResponse.json({ id: season.id }, { status: 201 });
 }

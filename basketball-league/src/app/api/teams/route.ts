@@ -6,6 +6,7 @@ import { teams, users, divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { autoPlaceTeam } from "@/lib/bracket-service";
+import { assertDivisionEditable, SeasonLockedError } from "@/lib/season-guard";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
@@ -31,6 +32,9 @@ export async function POST(req: Request) {
 
   const div = await db.query.divisions.findFirst({ where: eq(divisions.id, divisionId) });
   if (!div) return NextResponse.json({ error: "Unknown division" }, { status: 400 });
+
+  try { await assertDivisionEditable(divisionId); }
+  catch (e) { if (e instanceof SeasonLockedError) return NextResponse.json({ error: e.message }, { status: 409 }); throw e; }
 
   const manager = await db.query.users.findFirst({ where: eq(users.id, managerId) });
   if (!manager || manager.role !== "team_manager" || manager.teamId !== null) {

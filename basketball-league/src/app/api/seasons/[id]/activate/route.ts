@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { activateSeason } from "@/lib/season-service";
 
-export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+const Body = z.object({ startedAt: z.string().datetime() });
+
+// Activate a draft season (sets its start date) and end the current active one.
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try { requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
@@ -13,10 +18,13 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const seasonId = Number(id);
   if (!Number.isFinite(seasonId)) return NextResponse.json({ error: "Bad id" }, { status: 400 });
 
+  const parsed = Body.safeParse(await req.json());
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
   const season = await db.query.seasons.findFirst({ where: eq(seasons.id, seasonId) });
   if (!season) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (season.status !== "draft") return NextResponse.json({ error: "Already started" }, { status: 400 });
+  if (season.status !== "draft") return NextResponse.json({ error: "Only a draft season can be activated" }, { status: 409 });
 
-  await db.update(seasons).set({ status: "active" }).where(eq(seasons.id, seasonId));
+  await activateSeason(db, seasonId, parsed.data.startedAt);
   return NextResponse.json({ ok: true });
 }
