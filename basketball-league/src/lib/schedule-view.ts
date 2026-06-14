@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, or } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNotNull, ne, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, divisions, brackets } from "@/db/schema";
 import { loadBracketTree, type BracketBox } from "./bracket-service";
@@ -24,6 +24,7 @@ export async function loadScheduleView(opts: {
   pageSize: number;
   publishedOnly: boolean;
   teamId?: number | null;
+  scheduledOnly?: boolean;
 }): Promise<ScheduleView> {
   const divs = await db
     .select()
@@ -50,6 +51,10 @@ export async function loadScheduleView(opts: {
   if (opts.divisionId != null) conds.push(eq(matches.divisionId, opts.divisionId));
   if (opts.teamId != null) {
     conds.push(or(eq(matches.homeTeamId, opts.teamId), eq(matches.awayTeamId, opts.teamId))!);
+  }
+  // Hide planned placeholder matches with no date; show scheduled/played ones.
+  if (opts.scheduledOnly) {
+    conds.push(or(ne(matches.status, "planned"), isNotNull(matches.scheduledAt))!);
   }
   const where = and(...conds);
 

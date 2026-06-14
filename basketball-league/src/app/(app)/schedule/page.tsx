@@ -53,6 +53,7 @@ export default async function SchedulePage({
         pageSize: PAGE_SIZE,
         publishedOnly: session.role !== "admin",
         teamId: teamFilter,
+        scheduledOnly: isManager,
       })
     : { matches: [], total: 0, totalPages: 1, page: 1, divisions: [], selectedBracket: null };
 

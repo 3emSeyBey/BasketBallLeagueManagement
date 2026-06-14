@@ -37,6 +37,7 @@ export default async function PublicSchedule({
         page: startPage,
         pageSize: PAGE_SIZE,
         publishedOnly: true,
+        scheduledOnly: true,
       })
     : { matches: [], total: 0, totalPages: 1, page: 1, divisions: [], selectedBracket: null };
 
