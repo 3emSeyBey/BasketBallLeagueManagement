@@ -106,6 +106,8 @@ export function StreamHost({
   const screenAudioRef = useRef<ILocalAudioTrack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const startedAtRef = useRef<number>(0);
+  const phaseRef = useRef(phase);
+  useEffect(() => { phaseRef.current = phase; }, [phase]);
 
   const loadDevices = useCallback(async () => {
     try {
@@ -403,8 +405,18 @@ export function StreamHost({
   useEffect(
     () => () => {
       void teardown();
+      // SPA navigation away while live: revert to "started" so the match isn't
+      // stuck "live" without an active broadcast. (close/refresh handled below.)
+      if (phaseRef.current === "live" && !matchEndedRef.current) {
+        void fetch(`/api/matches/${matchId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "started" }),
+          keepalive: true,
+        });
+      }
     },
-    [],
+    [matchId],
   );
 
   // Revert match status to "started" if the host closes/refreshes mid-stream.
