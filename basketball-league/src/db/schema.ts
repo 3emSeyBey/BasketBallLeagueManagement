@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { sqliteTable, text, integer, unique, blob } from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
@@ -13,16 +14,27 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
-export const teamDivisions = sqliteTable("team_divisions", {
+export const seasons = sqliteTable("seasons", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
-  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  startedAt: text("started_at").notNull(),
+  endedAt: text("ended_at"),
+  status: text("status", { enum: ["draft", "active", "ended"] }).default("draft").notNull(),
 });
+
+export const divisions = sqliteTable("divisions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  seasonId: integer("season_id").notNull().references(() => seasons.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (t) => ({
+  uniqueDivisionName: unique().on(t.seasonId, t.name),
+}));
 
 export const teams = sqliteTable("teams", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
-  division: text("division").notNull(),
+  divisionId: integer("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
   imageMimeType: text("image_mime_type"),
   imageData: blob("image_data", { mode: "buffer" }),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
@@ -43,35 +55,6 @@ export const players = sqliteTable("players", {
   uniqueJersey: unique().on(t.teamId, t.jerseyNumber),
 }));
 
-export const seasons = sqliteTable("seasons", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull().unique(),
-  startedAt: text("started_at").notNull(),
-  endedAt: text("ended_at"),
-  status: text("status", { enum: ["draft", "active", "ended"] }).default("draft").notNull(),
-  bracketType: text("bracket_type", { enum: ["single_elim"] }).default("single_elim").notNull(),
-  thirdPlaceMatch: integer("third_place_match", { mode: "boolean" }).default(false).notNull(),
-});
-
-export const divisions = sqliteTable("divisions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  seasonId: integer("season_id").notNull().references(() => seasons.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-}, (t) => ({
-  uniqueDivisionName: unique().on(t.seasonId, t.name),
-}));
-
-export const seasonTeams = sqliteTable("season_teams", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  seasonId: integer("season_id").notNull().references(() => seasons.id, { onDelete: "cascade" }),
-  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
-  divisionId: integer("division_id").references(() => divisions.id, { onDelete: "set null" }),
-  seed: integer("seed"),
-}, (t) => ({
-  uniqueSeasonTeam: unique().on(t.seasonId, t.teamId),
-}));
-
 export const matches = sqliteTable("matches", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   seasonId: integer("season_id").notNull().references(() => seasons.id, { onDelete: "cascade" }),
@@ -79,28 +62,34 @@ export const matches = sqliteTable("matches", {
   homeTeamId: integer("home_team_id").references(() => teams.id, { onDelete: "set null" }),
   awayTeamId: integer("away_team_id").references(() => teams.id, { onDelete: "set null" }),
   scheduledAt: text("scheduled_at"),
-  venue: text("venue").notNull(),
+  venue: text("venue"),
   status: text("status", { enum: ["planned", "scheduled", "started", "live", "ended"] }).notNull().default("planned"),
   homeScore: integer("home_score").default(0).notNull(),
   awayScore: integer("away_score").default(0).notNull(),
   agoraChannel: text("agora_channel"),
-  round: integer("round"),
-  stage: text("stage", { enum: ["pool", "playoff", "final"] }),
-  isDivisionFinal: integer("is_division_final", { mode: "boolean" }).default(false).notNull(),
-  isSeasonFinal: integer("is_season_final", { mode: "boolean" }).default(false).notNull(),
-  bracketPosition: integer("bracket_position"),
-  nextMatchId: integer("next_match_id"),
-  nextMatchSlot: text("next_match_slot", { enum: ["home", "away"] }),
 });
 
-export const finalsEliminations = sqliteTable("finals_eliminations", {
+// A bracket is a single-elimination draw drawn by the admin on the canvas.
+// One bracket per division may be the default (governs auto-placement of new teams).
+export const brackets = sqliteTable("brackets", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  seasonId: integer("season_id").notNull().references(() => seasons.id, { onDelete: "cascade" }),
-  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
-  eliminatedAt: text("eliminated_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
-}, (t) => ({
-  uniqueSeasonTeam: unique().on(t.seasonId, t.teamId),
-}));
+  divisionId: integer("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  isDefault: integer("is_default", { mode: "boolean" }).default(false).notNull(),
+  isPublished: integer("is_published", { mode: "boolean" }).default(false).notNull(),
+  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
+// A bracket_match positions one match within a bracket's round/slot grid and
+// records which next-round box its winner feeds into.
+export const bracketMatches = sqliteTable("bracket_matches", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  bracketId: integer("bracket_id").notNull().references(() => brackets.id, { onDelete: "cascade" }),
+  matchId: integer("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
+  roundIndex: integer("round_index").notNull(),
+  slotIndex: integer("slot_index").notNull(),
+  feedsIntoId: integer("feeds_into_id").references((): AnySQLiteColumn => bracketMatches.id, { onDelete: "set null" }),
+});
 
 export const announcements = sqliteTable("announcements", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -129,15 +118,13 @@ export type NewPlayer = typeof players.$inferInsert;
 export type Match = typeof matches.$inferSelect;
 export type NewMatch = typeof matches.$inferInsert;
 export type Season = typeof seasons.$inferSelect;
-export type SeasonTeam = typeof seasonTeams.$inferSelect;
-export type NewSeasonTeam = typeof seasonTeams.$inferInsert;
 export type Division = typeof divisions.$inferSelect;
 export type NewDivision = typeof divisions.$inferInsert;
-export type FinalsElimination = typeof finalsEliminations.$inferSelect;
-export type NewFinalsElimination = typeof finalsEliminations.$inferInsert;
+export type Bracket = typeof brackets.$inferSelect;
+export type NewBracket = typeof brackets.$inferInsert;
+export type BracketMatch = typeof bracketMatches.$inferSelect;
+export type NewBracketMatch = typeof bracketMatches.$inferInsert;
 export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type AnnouncementImage = typeof announcementImages.$inferSelect;
 export type NewAnnouncementImage = typeof announcementImages.$inferInsert;
-export type TeamDivision = typeof teamDivisions.$inferSelect;
-export type NewTeamDivision = typeof teamDivisions.$inferInsert;
