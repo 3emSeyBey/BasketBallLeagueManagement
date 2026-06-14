@@ -1,15 +1,22 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, teams, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { MatchRow } from "@/components/schedule/MatchRow";
+import { SchedulePagination } from "@/components/schedule/SchedulePagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function SchedulePage() {
+const PAGE_SIZE = 15;
+
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   const session = (await getSession())!;
   const [allTeams, seasonRows] = await Promise.all([
     db.select().from(teams),
@@ -20,6 +27,14 @@ export default async function SchedulePage() {
   // the bracket is still viewable after the season ends.
   const activeSeason =
     seasonRows.find((s) => s.status === "active") ?? seasonRows[0] ?? null;
+
+  const totalMatches = activeSeason
+    ? (await db.select({ c: count() }).from(matches).where(eq(matches.seasonId, activeSeason.id)))[0].c
+    : 0;
+  const totalPages = Math.max(1, Math.ceil(totalMatches / PAGE_SIZE));
+  const requestedPage = Number((await searchParams).page ?? "1");
+  const page = Math.min(Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1), totalPages);
+
   // Match list mirrors the bracket — only matches from the visible season.
   const allMatches = activeSeason
     ? await db
@@ -27,6 +42,8 @@ export default async function SchedulePage() {
         .from(matches)
         .where(eq(matches.seasonId, activeSeason.id))
         .orderBy(matches.scheduledAt)
+        .limit(PAGE_SIZE)
+        .offset((page - 1) * PAGE_SIZE)
     : [];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
 
@@ -35,7 +52,7 @@ export default async function SchedulePage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Game Schedule</h1>
-          <p className="text-muted-foreground">{allMatches.length} matches</p>
+          <p className="text-muted-foreground">{totalMatches} matches</p>
         </div>
         {session.role === "admin" && season && (
           <div className="flex flex-col sm:flex-row gap-2">
@@ -91,6 +108,8 @@ export default async function SchedulePage() {
         </table>
         </div>
       </Card>
+
+      <SchedulePagination page={page} totalPages={totalPages} basePath="/schedule" />
     </div>
   );
 }
