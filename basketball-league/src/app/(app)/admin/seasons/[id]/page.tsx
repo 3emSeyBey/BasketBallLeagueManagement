@@ -47,10 +47,10 @@ export default async function ManageSeasonPage({ params }: { params: Promise<{ i
           </p>
         </div>
         <Link
-          href={`/admin/seasons/${season.id}/canvas`}
+          href="/admin/brackets"
           className="text-sm text-primary hover:underline"
         >
-          Open canvas →
+          Brackets →
         </Link>
       </div>
 

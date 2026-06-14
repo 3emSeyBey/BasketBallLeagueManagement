@@ -48,14 +48,12 @@ export default async function SchedulePage() {
             >
               + Create Match
             </Link>
-            {activeSeason && (
-              <Link
-                href={`/admin/seasons/${activeSeason.id}/canvas`}
-                className={buttonVariants({ variant: "outline" })}
-              >
-                Open canvas
-              </Link>
-            )}
+            <Link
+              href="/admin/brackets"
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Brackets
+            </Link>
           </div>
         )}
       </div>
