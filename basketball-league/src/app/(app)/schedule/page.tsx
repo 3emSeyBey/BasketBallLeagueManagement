@@ -35,6 +35,9 @@ export default async function SchedulePage({
   const requestedPage = Number(sp.page ?? "1");
   const startPage = Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1);
 
+  // Team managers only see their own team's matches.
+  const teamFilter = session.role === "team_manager" ? session.teamId ?? -1 : null;
+
   const view = activeSeason
     ? await loadScheduleView({
         seasonId: activeSeason.id,
@@ -42,6 +45,7 @@ export default async function SchedulePage({
         page: startPage,
         pageSize: PAGE_SIZE,
         publishedOnly: session.role !== "admin",
+        teamId: teamFilter,
       })
     : { matches: [], total: 0, totalPages: 1, page: 1, divisions: [], selectedBracket: null };
 

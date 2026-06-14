@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, divisions, brackets } from "@/db/schema";
 import { loadBracketTree, type BracketBox } from "./bracket-service";
@@ -23,6 +23,7 @@ export async function loadScheduleView(opts: {
   page: number;
   pageSize: number;
   publishedOnly: boolean;
+  teamId?: number | null;
 }): Promise<ScheduleView> {
   const divs = await db
     .select()
@@ -45,9 +46,12 @@ export async function loadScheduleView(opts: {
     return { id: d.id, name: d.name, bracketId: visible ? b!.id : null };
   });
 
-  const where = opts.divisionId != null
-    ? and(eq(matches.seasonId, opts.seasonId), eq(matches.divisionId, opts.divisionId))
-    : eq(matches.seasonId, opts.seasonId);
+  const conds = [eq(matches.seasonId, opts.seasonId)];
+  if (opts.divisionId != null) conds.push(eq(matches.divisionId, opts.divisionId));
+  if (opts.teamId != null) {
+    conds.push(or(eq(matches.homeTeamId, opts.teamId), eq(matches.awayTeamId, opts.teamId))!);
+  }
+  const where = and(...conds);
 
   const total = (await db.select({ c: count() }).from(matches).where(where))[0].c;
   const totalPages = Math.max(1, Math.ceil(total / opts.pageSize));
