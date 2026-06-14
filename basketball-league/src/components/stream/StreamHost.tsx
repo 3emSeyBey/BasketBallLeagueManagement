@@ -74,7 +74,8 @@ export function StreamHost({
     });
     setEndingMatch(false);
     if (!res.ok) {
-      toast.error("Failed to end match");
+      const j = await res.json().catch(() => ({}));
+      toast.error(typeof j.error === "string" ? j.error : "Failed to end match");
       return;
     }
     matchEndedRef.current = true;

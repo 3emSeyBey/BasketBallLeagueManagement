@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches } from "@/db/schema";
+import { matches, bracketMatches } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import {
@@ -40,6 +40,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const before = await db.query.matches.findFirst({ where: eq(matches.id, idNum) });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // A bracket match can't end in a tie — there'd be no winner to advance.
+  const becomingEnded = before.status !== "ended" && parsed.data.status === "ended";
+  if (becomingEnded) {
+    const h = parsed.data.homeScore ?? before.homeScore;
+    const a = parsed.data.awayScore ?? before.awayScore;
+    if (h === a) {
+      const inBracket = await db.query.bracketMatches.findFirst({ where: eq(bracketMatches.matchId, idNum) });
+      if (inBracket) {
+        return NextResponse.json(
+          { error: "This match can't end in a tie — enter the final (overtime) score before ending." },
+          { status: 409 },
+        );
+      }
+    }
+  }
 
   // Track who is broadcasting: set on going live, clear when paused/ended.
   const updateData: Record<string, unknown> = { ...parsed.data };
