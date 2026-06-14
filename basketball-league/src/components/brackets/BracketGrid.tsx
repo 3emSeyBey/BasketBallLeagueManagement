@@ -92,6 +92,24 @@ function BoxHeader({
   );
 }
 
+// Shift a hex color toward white (pct > 0) or black (pct < 0) for gradient stops.
+function shade(hex: string, pct: number): string {
+  const m = hex.replace("#", "");
+  if (m.length < 6) return hex;
+  const num = parseInt(m, 16);
+  const target = pct < 0 ? 0 : 255;
+  const p = Math.abs(pct) / 100;
+  const mix = (c: number) => Math.round((target - c) * p + c);
+  const r = mix((num >> 16) & 255);
+  const g = mix((num >> 8) & 255);
+  const b = mix(num & 255);
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function teamGradient(hex: string): string {
+  return `linear-gradient(135deg, ${shade(hex, 16)} 0%, ${hex} 45%, ${shade(hex, -26)} 100%)`;
+}
+
 // Readable foreground for a given background color (WCAG relative luminance).
 function textOn(hex: string): string {
   const m = hex.replace("#", "");
@@ -176,7 +194,7 @@ function Slot({
       type="button"
       disabled={!editable}
       onClick={editable ? () => onSlotClick?.(box, slot) : undefined}
-      style={styled ? { backgroundColor: color!, color: fg } : undefined}
+      style={styled ? { backgroundImage: teamGradient(color!), color: fg } : undefined}
       className={`flex h-1/2 w-full items-center gap-2.5 px-3 text-left text-[13px] ${
         editable ? "cursor-pointer hover:brightness-110" : "cursor-default"
       } ${slot === "home" ? "border-b border-border/60" : ""} ${
