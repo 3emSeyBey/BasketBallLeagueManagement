@@ -131,7 +131,8 @@ export function BracketCanvas({ initial }: { initial: BracketData }) {
   }
 
   function addMatch() {
-    const r0 = [...rounds[0], blankBox(0, rounds[0].length)];
+    const cur = rounds[0] ?? [];
+    const r0 = [...cur, blankBox(0, cur.length)];
     commit(derive(r0, rounds));
   }
 
@@ -266,10 +267,12 @@ export function BracketCanvas({ initial }: { initial: BracketData }) {
   // slot picker data
   const pickBox = pick ? rounds[pick.r]?.[pick.i] : null;
   const currentTeamId = pickBox ? (pick!.slot === "home" ? pickBox.homeTeamId : pickBox.awayTeamId) : null;
+  const opponentTeamId = pickBox ? (pick!.slot === "home" ? pickBox.awayTeamId : pickBox.homeTeamId) : null;
   const pickerTeams: TeamRef[] = (() => {
     if (!pick) return [];
-    const list = initial.divisionTeams.filter((t) => eligibleIds.has(t.id));
-    if (currentTeamId != null && !list.some((t) => t.id === currentTeamId)) {
+    // Exclude the team already in the other slot so a team can't face itself.
+    const list = initial.divisionTeams.filter((t) => eligibleIds.has(t.id) && t.id !== opponentTeamId);
+    if (currentTeamId != null && currentTeamId !== opponentTeamId && !list.some((t) => t.id === currentTeamId)) {
       const cur = teamMap.get(currentTeamId);
       if (cur) list.unshift(cur);
     }
@@ -355,7 +358,9 @@ export function BracketCanvas({ initial }: { initial: BracketData }) {
             onValueChange={(v) => pick && setSlot(pick.r, pick.i, pick.slot, v ? Number(v) : null)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Pick a team" />
+              <SelectValue placeholder="Pick a team">
+                {(v: string) => (v ? teamMap.get(Number(v))?.name ?? "Pick a team" : "Pick a team")}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {pickerTeams.length === 0 ? (

@@ -90,7 +90,12 @@ export function CreateBracketWizard({
             ) : (
               <Select value={divisionId} onValueChange={(v) => setDivisionId(v ?? "")}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pick a division" />
+                  <SelectValue placeholder="Pick a division">
+                    {(v: string) => {
+                      const d = divisions.find((x) => String(x.id) === v);
+                      return d ? `${d.seasonName} — ${d.name}` : "Pick a division";
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {divisions.map((d) => (
