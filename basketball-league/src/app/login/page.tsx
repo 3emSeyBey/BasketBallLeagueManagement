@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Volleyball } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { LoginForm } from "./LoginForm";
 import { listAnnouncements } from "@/lib/announcements-query";
 import { AnnouncementCard } from "@/components/announcements/AnnouncementCard";
@@ -24,20 +25,17 @@ export default async function LoginPage() {
             <p className="text-sm text-muted-foreground">Sign in to continue</p>
           </div>
           <LoginForm />
-          <div className="space-y-1 text-center">
-            <p className="text-sm text-muted-foreground">
-              New here?{" "}
-              <Link href="/register" className="text-primary underline-offset-4 hover:underline">
-                Register as a team manager
-              </Link>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Public viewer?{" "}
-              <Link href="/" className="text-primary underline-offset-4 hover:underline">
-                Browse without an account
-              </Link>
-            </p>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" />
+            or
+            <span className="h-px flex-1 bg-border" />
           </div>
+          <Link
+            href="/register"
+            className={buttonVariants({ variant: "outline", className: "w-full" })}
+          >
+            Register as a team manager
+          </Link>
         </Card>
 
         {announcements.length > 0 && (
