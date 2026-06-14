@@ -5,6 +5,7 @@ export type SessionPayload = {
   userId: number;
   role: "admin" | "team_manager";
   teamId: number | null;
+  status?: "pending" | "active";
 };
 
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -26,5 +27,6 @@ export async function verifySession(token: string): Promise<SessionPayload> {
     userId: payload.userId as number,
     role: payload.role as SessionPayload["role"],
     teamId: (payload.teamId as number | null) ?? null,
+    status: (payload.status as SessionPayload["status"]) ?? "active",
   };
 }

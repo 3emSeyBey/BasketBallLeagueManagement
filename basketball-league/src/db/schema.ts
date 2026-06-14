@@ -10,7 +10,12 @@ export const users = sqliteTable("users", {
   contactNumber: text("contact_number"),
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["admin", "team_manager"] }).notNull(),
+  status: text("status", { enum: ["pending", "active"] }).default("active").notNull(),
   teamId: integer("team_id").references(() => teams.id, { onDelete: "set null" }),
+  // For pending team-manager registrations awaiting admin approval.
+  requestedTeamName: text("requested_team_name"),
+  requestedDivisionId: integer("requested_division_id").references(() => divisions.id, { onDelete: "set null" }),
+  requestedTeamId: integer("requested_team_id").references(() => teams.id, { onDelete: "set null" }),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 

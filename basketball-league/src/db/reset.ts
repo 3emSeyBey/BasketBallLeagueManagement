@@ -21,7 +21,11 @@ const CREATE = [
     contact_number TEXT,
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
     team_id INTEGER,
+    requested_team_name TEXT,
+    requested_division_id INTEGER,
+    requested_team_id INTEGER,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
   `CREATE TABLE seasons (

@@ -24,12 +24,20 @@ export default async function LoginPage() {
             <p className="text-sm text-muted-foreground">Sign in to continue</p>
           </div>
           <LoginForm />
-          <p className="text-xs text-center text-muted-foreground">
-            Public viewer?{" "}
-            <Link href="/" className="text-primary underline-offset-4 hover:underline">
-              Browse without an account
-            </Link>
-          </p>
+          <div className="space-y-1 text-center">
+            <p className="text-sm text-muted-foreground">
+              New here?{" "}
+              <Link href="/register" className="text-primary underline-offset-4 hover:underline">
+                Register as a team manager
+              </Link>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Public viewer?{" "}
+              <Link href="/" className="text-primary underline-offset-4 hover:underline">
+                Browse without an account
+              </Link>
+            </p>
+          </div>
         </Card>
 
         {announcements.length > 0 && (

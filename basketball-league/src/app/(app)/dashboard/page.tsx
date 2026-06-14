@@ -44,6 +44,14 @@ export default async function Dashboard() {
 
   return (
     <div className="space-y-8">
+      {session.status === "pending" && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400">
+          <p className="font-medium">Your account is awaiting admin approval.</p>
+          <p className="text-amber-700/80 dark:text-amber-400/80">
+            Once approved, your team is set up and you can manage your roster. You can browse the league in the meantime.
+          </p>
+        </div>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-semibold">Dashboard</h1>
         <Link
