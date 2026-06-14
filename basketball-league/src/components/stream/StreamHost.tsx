@@ -198,10 +198,31 @@ export function StreamHost({
       await client.setClientRole("host");
       await client.join(appId, channel, token, uid);
 
-      const mic = await AgoraRTC.createMicrophoneAudioTrack({
-        microphoneId: micId || undefined,
-      });
-      const { video, extraAudio } = await buildVideoTrack();
+      let mic: IMicrophoneAudioTrack;
+      let video: ILocalVideoTrack;
+      let extraAudio: ILocalAudioTrack | undefined;
+
+      if (source === "camera") {
+        // Single getUserMedia for mic+camera — avoids the "can not find stream"
+        // race from two separate captures. Retry with default devices if the
+        // saved deviceId is stale or busy.
+        try {
+          [mic, video] = await AgoraRTC.createMicrophoneAndCameraTracks(
+            { microphoneId: micId || undefined },
+            { cameraId: cameraId || undefined, encoderConfig: quality },
+          );
+        } catch {
+          [mic, video] = await AgoraRTC.createMicrophoneAndCameraTracks(
+            {},
+            { encoderConfig: quality },
+          );
+        }
+      } else {
+        mic = await AgoraRTC.createMicrophoneAudioTrack({ microphoneId: micId || undefined });
+        const built = await buildVideoTrack();
+        video = built.video;
+        extraAudio = built.extraAudio;
+      }
 
       video.play(containerRef.current!, { fit: "contain" });
 
@@ -233,7 +254,10 @@ export function StreamHost({
       setPhase("live");
       void patchStatus("live").then(() => router.refresh());
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to start stream";
+      const raw = e instanceof Error ? e.message : "Failed to start stream";
+      const msg = /find stream|getUserMedia|NotReadable|NotFound|Permission|Device/i.test(raw)
+        ? "Couldn't access the camera/mic. Make sure they're connected, allowed in the browser, and not in use by another app or tab, then try again."
+        : raw;
       setError(msg);
       setPhase("setup");
       await teardown();
