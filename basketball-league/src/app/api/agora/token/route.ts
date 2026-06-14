@@ -18,8 +18,10 @@ export async function GET(req: Request) {
   const m = await db.query.matches.findFirst({
     where: eq(matches.id, parsed.data.matchId),
   });
-  if (!m || !m.agoraChannel)
-    return NextResponse.json({ error: "No channel" }, { status: 404 });
+  if (!m) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  // Bracket-created matches have no stored channel — derive a deterministic one
+  // from the match id so host and viewers all join the same channel.
+  const channel = m.agoraChannel ?? `match-${m.id}`;
 
   const session = await getSession();
   const canPublish =
@@ -30,10 +32,10 @@ export async function GET(req: Request) {
   const uid = session?.userId ?? Math.floor(Math.random() * 1_000_000);
 
   try {
-    const token = buildRtcToken(m.agoraChannel, uid, role);
+    const token = buildRtcToken(channel, uid, role);
     return NextResponse.json({
       appId: process.env.NEXT_PUBLIC_AGORA_APP_ID,
-      channel: m.agoraChannel,
+      channel,
       token,
       uid,
       role,
