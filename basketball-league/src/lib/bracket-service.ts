@@ -278,6 +278,101 @@ export async function advanceWinner(db: Database, matchId: number): Promise<{ ch
   return { championTeamId: null };
 }
 
+export type SaveBox = {
+  bracketMatchId: number | null;
+  homeTeamId: number | null;
+  awayTeamId: number | null;
+  scheduledAt: string | null;
+  venue: string | null;
+};
+export type SaveBracketInput = {
+  title: string;
+  isDefault: boolean;
+  rounds: SaveBox[][];
+};
+
+// Apply a draft box's teams/schedule onto its match. Never touches an ended
+// match (it has a result). A planned match given a date becomes "scheduled".
+async function applyBox(db: Database, matchId: number, box: SaveBox): Promise<void> {
+  const m = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
+  if (!m || m.status === "ended") return;
+  const status = box.scheduledAt && m.status === "planned" ? "scheduled" : m.status;
+  await db.update(matches).set({
+    homeTeamId: box.homeTeamId ?? null,
+    awayTeamId: box.awayTeamId ?? null,
+    scheduledAt: box.scheduledAt ?? null,
+    venue: box.venue ?? null,
+    status,
+  }).where(eq(matches.id, matchId));
+}
+
+// Commit a whole draft bracket at once and publish it. Reconciles round-1 boxes
+// by id (create new / delete removed / re-pack order), rebuilds upper rounds,
+// then applies teams + schedule to every box. Title / default / published set too.
+export async function saveBracket(db: Database, bracketId: number, input: SaveBracketInput): Promise<BracketTree> {
+  const bracket = await db.query.brackets.findFirst({ where: eq(brackets.id, bracketId) });
+  if (!bracket) throw new Error("Bracket not found");
+
+  // --- Round 1 reconcile ---
+  const existingR1 = await db.select().from(bracketMatches)
+    .where(and(eq(bracketMatches.bracketId, bracketId), eq(bracketMatches.roundIndex, 0)))
+    .orderBy(asc(bracketMatches.slotIndex));
+  const payloadR1 = input.rounds[0] ?? [];
+  const keepIds = new Set(payloadR1.map((b) => b.bracketMatchId).filter((x): x is number => x != null));
+
+  for (const e of existingR1) {
+    if (!keepIds.has(e.id)) {
+      await db.delete(bracketMatches).where(eq(bracketMatches.id, e.id));
+      await db.delete(matches).where(eq(matches.id, e.matchId));
+    }
+  }
+
+  const existingById = new Map(existingR1.map((e) => [e.id, e]));
+  let slot = 0;
+  for (const box of payloadR1) {
+    let matchId: number;
+    if (box.bracketMatchId != null && existingById.has(box.bracketMatchId)) {
+      const bm = existingById.get(box.bracketMatchId)!;
+      if (bm.slotIndex !== slot) {
+        await db.update(bracketMatches).set({ slotIndex: slot }).where(eq(bracketMatches.id, bm.id));
+      }
+      matchId = bm.matchId;
+    } else {
+      const bm = await createRound1Box(db, bracket, slot);
+      matchId = bm.matchId;
+    }
+    await applyBox(db, matchId, box);
+    slot++;
+  }
+
+  // --- Upper rounds: rebuild structure, then apply teams/schedule by position ---
+  await rebuildStructure(db, bracketId);
+
+  const after = await db.select().from(bracketMatches)
+    .where(eq(bracketMatches.bracketId, bracketId))
+    .orderBy(asc(bracketMatches.roundIndex), asc(bracketMatches.slotIndex));
+  const afterByRound: (typeof after)[] = [];
+  for (const bm of after) (afterByRound[bm.roundIndex] ||= []).push(bm);
+
+  for (let r = 1; r < input.rounds.length; r++) {
+    const payloadRound = input.rounds[r] ?? [];
+    for (let i = 0; i < payloadRound.length; i++) {
+      const target = afterByRound[r]?.[i];
+      if (target) await applyBox(db, target.matchId, payloadRound[i]);
+    }
+  }
+
+  // --- Meta: title, default, publish ---
+  if (input.isDefault) {
+    await setDefaultBracket(db, bracketId);
+  } else {
+    await db.update(brackets).set({ isDefault: false }).where(eq(brackets.id, bracketId));
+  }
+  await db.update(brackets).set({ title: input.title, isPublished: true }).where(eq(brackets.id, bracketId));
+
+  return loadBracketTree(db, bracketId);
+}
+
 export async function loadBracketTree(db: Database, bracketId: number): Promise<BracketTree> {
   const bracket = await db.query.brackets.findFirst({ where: eq(brackets.id, bracketId) });
   if (!bracket) throw new Error("Bracket not found");

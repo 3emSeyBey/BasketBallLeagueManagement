@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Volleyball, Trophy } from "lucide-react";
+import { Plus, Volleyball, Trophy, Clock, Trash2 } from "lucide-react";
 
 export type BracketBox = {
   bracketMatchId: number;
@@ -18,13 +18,79 @@ export type BracketBox = {
   status: string;
   homeScore: number;
   awayScore: number;
+  scheduledAt?: string | null;
+  venue?: string | null;
   feedsIntoId: number | null;
 };
 
-const BOX_W = 230;
-const BOX_H = 86;
-const UNIT = 108; // vertical slot for a round-1 box (incl. gap)
+const BOX_W = 250;
+const HEADER_H = 26;
+const SLOTS_H = 86;
+const BOX_H = HEADER_H + SLOTS_H;
+const UNIT = 136; // vertical slot for a round-1 box (incl. gap)
 const CONNECTOR_W = 44;
+
+function formatWhen(iso: string | null | undefined): string {
+  if (!iso) return "No date set";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "No date set";
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+const STATUS_META: Record<string, { label: string; cls: string }> = {
+  planned: { label: "Planned", cls: "bg-muted text-muted-foreground" },
+  scheduled: { label: "Scheduled", cls: "bg-sky-500/15 text-sky-500" },
+  started: { label: "Live", cls: "bg-red-500/15 text-red-500" },
+  live: { label: "Live", cls: "bg-red-500/15 text-red-500" },
+  ended: { label: "Final", cls: "bg-emerald-500/15 text-emerald-500" },
+};
+
+function BoxHeader({
+  box,
+  editable,
+  removable,
+  onEditMatch,
+  onRemoveMatch,
+}: {
+  box: BracketBox;
+  editable?: boolean;
+  removable?: boolean;
+  onEditMatch?: (box: BracketBox) => void;
+  onRemoveMatch?: (box: BracketBox) => void;
+}) {
+  const st = STATUS_META[box.status] ?? STATUS_META.planned;
+  return (
+    <div
+      className="flex items-center gap-1.5 border-b border-border/60 bg-muted/40 px-2 text-[10px]"
+      style={{ height: HEADER_H }}
+    >
+      <span className="truncate text-muted-foreground">{formatWhen(box.scheduledAt)}</span>
+      <span className={`rounded px-1.5 py-px font-medium ${st.cls}`}>{st.label}</span>
+      <div className="ml-auto flex items-center gap-1">
+        {editable && onEditMatch ? (
+          <button
+            type="button"
+            title="Set date / time"
+            onClick={() => onEditMatch(box)}
+            className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Clock className="size-3.5" />
+          </button>
+        ) : null}
+        {editable && removable && onRemoveMatch ? (
+          <button
+            type="button"
+            title="Remove match"
+            onClick={() => onRemoveMatch(box)}
+            className="grid size-5 place-items-center rounded text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 // Readable foreground for a given background color (WCAG relative luminance).
 function textOn(hex: string): string {
@@ -168,12 +234,16 @@ export function BracketGrid({
   editable,
   onSlotClick,
   onAddMatch,
+  onEditMatch,
+  onRemoveMatch,
 }: {
   rounds: BracketBox[][];
   title?: string;
   editable?: boolean;
   onSlotClick?: (box: BracketBox, slot: "home" | "away") => void;
   onAddMatch?: () => void;
+  onEditMatch?: (box: BracketBox) => void;
+  onRemoveMatch?: (box: BracketBox) => void;
 }) {
   const empty = rounds.length === 0 || (rounds[0]?.length ?? 0) === 0;
   const totalRounds = rounds.length;
@@ -211,17 +281,29 @@ export function BracketGrid({
                     {roundLabel(r, totalRounds)}
                   </div>
                   <div className="flex flex-col">
-                    {round.map((box) => (
-                      <div key={box.bracketMatchId} className="flex items-center justify-center" style={{ height: H }}>
-                        <div
-                          className="overflow-hidden rounded-xl border bg-card shadow-sm ring-1 ring-black/5"
-                          style={{ width: BOX_W, height: BOX_H }}
-                        >
-                          <Slot box={box} slot="home" editable={editable} onSlotClick={onSlotClick} />
-                          <Slot box={box} slot="away" editable={editable} onSlotClick={onSlotClick} />
+                    {round.map((box) => {
+                      const removable = r === 0 && box.status === "planned";
+                      return (
+                        <div key={box.bracketMatchId} className="flex items-center justify-center" style={{ height: H }}>
+                          <div
+                            className="overflow-hidden rounded-xl border bg-card shadow-sm ring-1 ring-black/5"
+                            style={{ width: BOX_W, height: BOX_H }}
+                          >
+                            <BoxHeader
+                              box={box}
+                              editable={editable}
+                              removable={removable}
+                              onEditMatch={onEditMatch}
+                              onRemoveMatch={onRemoveMatch}
+                            />
+                            <div className="flex flex-col" style={{ height: SLOTS_H }}>
+                              <Slot box={box} slot="home" editable={editable} onSlotClick={onSlotClick} />
+                              <Slot box={box} slot="away" editable={editable} onSlotClick={onSlotClick} />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {editable && r === 0 && onAddMatch ? (
                       <button
                         type="button"
