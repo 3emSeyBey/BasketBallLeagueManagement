@@ -31,12 +31,19 @@ export default async function SchedulePage({
   const activeSeason =
     seasonRows.find((s) => s.status === "active") ?? seasonRows[0] ?? null;
 
-  const divisionId = sp.division && Number.isFinite(Number(sp.division)) ? Number(sp.division) : null;
+  const teamById = new Map(allTeams.map((t) => [t.id, t]));
+
   const requestedPage = Number(sp.page ?? "1");
   const startPage = Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1);
 
-  // Team managers only see their own team's matches.
-  const teamFilter = session.role === "team_manager" ? session.teamId ?? -1 : null;
+  // Team managers only see their own team's matches, pinned to their division
+  // (no division picker). Everyone else uses the ?division filter.
+  const isManager = session.role === "team_manager";
+  const myDivisionId = isManager && session.teamId ? teamById.get(session.teamId)?.divisionId ?? null : null;
+  const teamFilter = isManager ? session.teamId ?? -1 : null;
+  const divisionId = isManager
+    ? myDivisionId
+    : sp.division && Number.isFinite(Number(sp.division)) ? Number(sp.division) : null;
 
   const view = activeSeason
     ? await loadScheduleView({
@@ -49,8 +56,7 @@ export default async function SchedulePage({
       })
     : { matches: [], total: 0, totalPages: 1, page: 1, divisions: [], selectedBracket: null };
 
-  const teamById = new Map(allTeams.map((t) => [t.id, t]));
-  const pageQuery = divisionId != null ? { division: String(divisionId) } : undefined;
+  const pageQuery = !isManager && divisionId != null ? { division: String(divisionId) } : undefined;
 
   return (
     <div className="space-y-6">
@@ -76,11 +82,13 @@ export default async function SchedulePage({
         )}
       </div>
 
-      <ScheduleDivisionControls
-        divisions={view.divisions}
-        selected={divisionId != null ? String(divisionId) : "all"}
-        basePath="/schedule"
-      />
+      {!isManager && (
+        <ScheduleDivisionControls
+          divisions={view.divisions}
+          selected={divisionId != null ? String(divisionId) : "all"}
+          basePath="/schedule"
+        />
+      )}
 
       <ScheduleBracketSection
         divisionId={divisionId}
