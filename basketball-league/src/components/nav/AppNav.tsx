@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Trophy, Menu, X } from "lucide-react";
 import type { Role } from "@/lib/rbac";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ const NAV_BY_ROLE: Record<Role, { href: string; label: string }[]> = {
 export function AppNav({ role, username }: { role: Role; username: string }) {
   const items = NAV_BY_ROLE[role];
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
@@ -48,7 +51,7 @@ export function AppNav({ role, username }: { role: Role; username: string }) {
             <Link
               key={i.href}
               href={i.href}
-              className="hover:text-primary transition-colors"
+              className={`transition-colors ${isActive(i.href) ? "text-primary font-medium" : "text-muted-foreground hover:text-primary"}`}
             >
               {i.label}
             </Link>
@@ -75,7 +78,7 @@ export function AppNav({ role, username }: { role: Role; username: string }) {
               <Link
                 key={i.href}
                 href={i.href}
-                className="py-2 px-2 rounded-md hover:bg-muted text-sm"
+                className={`py-2 px-2 rounded-md text-sm ${isActive(i.href) ? "bg-muted text-primary font-medium" : "hover:bg-muted"}`}
                 onClick={() => setOpen(false)}
               >
                 {i.label}
