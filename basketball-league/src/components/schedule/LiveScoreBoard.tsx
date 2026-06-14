@@ -203,6 +203,13 @@ function ScoreSide({
         <div className="flex items-center justify-center gap-2">
           <button
             type="button"
+            onClick={() => onBump(1)}
+            className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-3 py-1.5 text-sm font-semibold text-primary ring-1 ring-primary/30 hover:bg-primary/25 transition-colors"
+          >
+            <Plus className="size-3.5" />1
+          </button>
+          <button
+            type="button"
             onClick={() => onBump(2)}
             className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-3 py-1.5 text-sm font-semibold text-primary ring-1 ring-primary/30 hover:bg-primary/25 transition-colors"
           >
