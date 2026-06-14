@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { and, eq, gte, isNotNull } from "drizzle-orm";
+import { and, eq, gte, inArray, isNotNull, count } from "drizzle-orm";
 import { CalendarDays, ChevronRight, Trophy } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, matches, players, seasons } from "@/db/schema";
+import { teams, matches, players, seasons, divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { listAnnouncements } from "@/lib/announcements-query";
 import { Card } from "@/components/ui/card";
@@ -12,16 +12,31 @@ import { AnnouncementCard } from "@/components/announcements/AnnouncementCard";
 export default async function Dashboard() {
   const session = (await getSession())!;
   const today = new Date().toISOString();
-  const [allTeams, upcoming, allPlayers, announcements, activeSeason] = await Promise.all([
+  const [allTeams, upcoming, announcements, activeSeason] = await Promise.all([
     db.select().from(teams),
     db.select().from(matches).where(and(isNotNull(matches.scheduledAt), gte(matches.scheduledAt, today))).orderBy(matches.scheduledAt).limit(5),
-    db.select().from(players),
     listAnnouncements(3),
     db.query.seasons.findFirst({ where: eq(seasons.status, "active") }),
   ]);
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
 
-  let myRoster: typeof allPlayers = [];
+  // Counts reflect the ACTIVE season only — archived seasons don't inflate them.
+  let activeTeamCount = 0;
+  let activePlayerCount = 0;
+  if (activeSeason) {
+    const divs = await db.select({ id: divisions.id }).from(divisions).where(eq(divisions.seasonId, activeSeason.id));
+    const divIds = divs.map((d) => d.id);
+    if (divIds.length) {
+      const tms = await db.select({ id: teams.id }).from(teams).where(inArray(teams.divisionId, divIds));
+      activeTeamCount = tms.length;
+      const tmIds = tms.map((t) => t.id);
+      if (tmIds.length) {
+        activePlayerCount = (await db.select({ c: count() }).from(players).where(inArray(players.teamId, tmIds)))[0].c;
+      }
+    }
+  }
+
+  let myRoster: (typeof players.$inferSelect)[] = [];
   if (session.role === "team_manager" && session.teamId) {
     myRoster = await db.select().from(players).where(eq(players.teamId, session.teamId));
   }
@@ -39,8 +54,8 @@ export default async function Dashboard() {
     hint?: string;
   }[] = session.role === "admin"
     ? [
-        { label: "Total Teams", value: allTeams.length, href: "/teams" },
-        { label: "Total Players", value: allPlayers.length, href: "/teams" },
+        { label: "Teams", value: activeTeamCount, href: "/teams", subtitle: activeSeason ? "this season" : "no active season" },
+        { label: "Players", value: activePlayerCount, href: "/teams", subtitle: activeSeason ? "this season" : "no active season" },
         activeSeason
           ? {
               label: "Active Season",
