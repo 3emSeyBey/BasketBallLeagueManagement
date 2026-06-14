@@ -31,11 +31,30 @@ export default async function Dashboard() {
     : "/standings";
   const seasonValue = activeSeason?.name ?? "Create";
 
-  const tiles = session.role === "admin"
+  const tiles: {
+    label: string;
+    value: string | number;
+    href: string;
+    subtitle?: string;
+    hint?: string;
+  }[] = session.role === "admin"
     ? [
         { label: "Total Teams", value: allTeams.length, href: "/teams" },
         { label: "Total Players", value: allPlayers.length, href: "/teams" },
-        { label: "Active Season", value: seasonValue, href: seasonHref },
+        activeSeason
+          ? {
+              label: "Active Season",
+              value: activeSeason.name,
+              href: "/admin/seasons",
+              subtitle: `Started ${new Date(activeSeason.startedAt).toLocaleDateString()}`,
+              hint: "Manage current season · View archive",
+            }
+          : {
+              label: "Active Season",
+              value: "None",
+              href: "/admin/seasons",
+              subtitle: "No active season",
+            },
       ]
     : [
         { label: "My Roster", value: myRoster.length, href: "/players" },
@@ -73,6 +92,12 @@ export default async function Dashboard() {
             <Card className="p-5 hover:border-primary transition-colors h-full">
               <p className="text-xs uppercase tracking-wider text-muted-foreground">{t.label}</p>
               <p className="text-3xl font-semibold mt-2 truncate">{t.value}</p>
+              {t.subtitle && (
+                <p className="text-xs text-muted-foreground mt-1 truncate">{t.subtitle}</p>
+              )}
+              {t.hint && (
+                <p className="text-[11px] text-muted-foreground/60 mt-1 truncate">{t.hint}</p>
+              )}
             </Card>
           </Link>
         ))}

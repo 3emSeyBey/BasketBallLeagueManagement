@@ -2,11 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { desc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { seasons, teams } from "@/db/schema";
+import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CreateSeasonForm } from "@/components/admin/CreateSeasonForm";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -14,19 +14,25 @@ export default async function AdminSeasonsPage() {
   const s = await getSession();
   if (s?.role !== "admin") redirect("/dashboard");
 
-  const [allSeasons, allTeams] = await Promise.all([
-    db.select().from(seasons).orderBy(desc(seasons.id)),
-    db.select().from(teams).orderBy(teams.name),
-  ]);
+  const allSeasons = await db.select().from(seasons).orderBy(desc(seasons.id));
+  const activeSeasons = allSeasons.filter(season => season.status !== "ended");
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-semibold">Seasons</h1>
-
-      <Card className="p-6 space-y-4">
-        <h2 className="font-semibold">Start a new season</h2>
-        <CreateSeasonForm teams={allTeams} />
-      </Card>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-3xl font-semibold">Seasons</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href="/admin/seasons/new" className={buttonVariants({ size: "lg" })}>
+            + Add a new season
+          </Link>
+          <Link
+            href="/admin/seasons/archive"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
+          >
+            View season archive
+          </Link>
+        </div>
+      </div>
 
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">
@@ -40,7 +46,7 @@ export default async function AdminSeasonsPage() {
               </tr>
             </thead>
             <tbody>
-              {allSeasons.map(season => (
+              {activeSeasons.map(season => (
                 <tr key={season.id} className="border-b">
                   <td className="p-3 font-medium">{season.name}</td>
                   <td className="p-3"><Badge variant="outline">{season.status}</Badge></td>
@@ -52,8 +58,8 @@ export default async function AdminSeasonsPage() {
                   </td>
                 </tr>
               ))}
-              {allSeasons.length === 0 && (
-                <tr><td colSpan={4} className="p-4 text-sm text-muted-foreground text-center">No seasons yet.</td></tr>
+              {activeSeasons.length === 0 && (
+                <tr><td colSpan={4} className="p-4 text-sm text-muted-foreground text-center">No active or draft season. Add one.</td></tr>
               )}
             </tbody>
           </table>

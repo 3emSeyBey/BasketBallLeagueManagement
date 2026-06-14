@@ -6,7 +6,8 @@ import { seasons, divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StartSeasonButton } from "@/components/admin/StartSeasonButton";
+import { ActivateSeasonButton } from "@/components/admin/ActivateSeasonButton";
+import { EndSeasonButton } from "@/components/admin/EndSeasonButton";
 import { DivisionManager } from "@/components/divisions/DivisionManager";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +23,16 @@ export default async function ManageSeasonPage({ params }: { params: Promise<{ i
   const season = await db.query.seasons.findFirst({ where: eq(seasons.id, seasonId) });
   if (!season) notFound();
 
+  if (season.status === "ended") redirect(`/admin/seasons/archive/${season.id}`);
+
   const seasonDivisions = await db
     .select()
     .from(divisions)
     .where(eq(divisions.seasonId, seasonId))
     .orderBy(asc(divisions.name));
+
   const isDraft = season.status === "draft";
+  const isActive = season.status === "active";
 
   return (
     <div className="space-y-6">
@@ -35,23 +40,25 @@ export default async function ManageSeasonPage({ params }: { params: Promise<{ i
         <Link href="/admin/seasons" className="text-sm text-primary hover:underline">← Seasons</Link>
         <div className="flex items-center gap-3">
           <Badge variant="outline">{season.status}</Badge>
-          {isDraft && <StartSeasonButton seasonId={season.id} />}
+          {isDraft && <ActivateSeasonButton seasonId={season.id} />}
+          {isActive && <EndSeasonButton seasonId={season.id} />}
         </div>
       </div>
 
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-3xl font-semibold">{season.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            starts {new Date(season.startedAt).toLocaleDateString()}
-          </p>
+          {isActive && (
+            <p className="text-sm text-muted-foreground">
+              started {new Date(season.startedAt).toLocaleDateString()}
+            </p>
+          )}
         </div>
-        <Link
-          href="/admin/brackets"
-          className="text-sm text-primary hover:underline"
-        >
-          Brackets →
-        </Link>
+        {isActive && (
+          <Link href="/admin/brackets" className="text-sm text-primary hover:underline">
+            Manage brackets →
+          </Link>
+        )}
       </div>
 
       <Card className="p-6 space-y-4">
