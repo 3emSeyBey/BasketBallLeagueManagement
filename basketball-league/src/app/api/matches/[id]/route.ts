@@ -28,7 +28,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
   const { id } = await params;
   const idNum = Number(id);
@@ -40,7 +41,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const before = await db.query.matches.findFirst({ where: eq(matches.id, idNum) });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const [row] = await db.update(matches).set(parsed.data).where(eq(matches.id, idNum)).returning();
+  // Track who is broadcasting: set on going live, clear when paused/ended.
+  const updateData: Record<string, unknown> = { ...parsed.data };
+  if (parsed.data.status === "live") updateData.broadcasterUserId = session.userId;
+  else if (parsed.data.status === "started" || parsed.data.status === "ended") updateData.broadcasterUserId = null;
+
+  const [row] = await db.update(matches).set(updateData).where(eq(matches.id, idNum)).returning();
 
   // Schedule change → announcement
   const scheduleChanged = (parsed.data.scheduledAt && parsed.data.scheduledAt !== before.scheduledAt)

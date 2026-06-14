@@ -73,6 +73,7 @@ export const matches = sqliteTable("matches", {
   homeScore: integer("home_score").default(0).notNull(),
   awayScore: integer("away_score").default(0).notNull(),
   agoraChannel: text("agora_channel"),
+  broadcasterUserId: integer("broadcaster_user_id").references(() => users.id, { onDelete: "set null" }),
 });
 
 // A bracket is a single-elimination draw drawn by the admin on the canvas.

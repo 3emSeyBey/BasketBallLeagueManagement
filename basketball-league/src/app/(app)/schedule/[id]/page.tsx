@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches, teams } from "@/db/schema";
+import { matches, teams, users } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { ScheduleEditDialog } from "@/components/schedule/ScheduleEditDialog";
 import { LiveScoreBoard } from "@/components/schedule/LiveScoreBoard";
@@ -35,6 +35,12 @@ export default async function MatchDetail({
     session?.role === "admin" ||
     (m.homeTeamId !== null && canManageTeam(session ?? null, m.homeTeamId)) ||
     (m.awayTeamId !== null && canManageTeam(session ?? null, m.awayTeamId));
+
+  // Someone else is actively broadcasting this match (not the current viewer).
+  const otherBroadcaster =
+    m.broadcasterUserId != null && m.broadcasterUserId !== session?.userId
+      ? await db.query.users.findFirst({ where: eq(users.id, m.broadcasterUserId) })
+      : null;
 
   return (
     <div className="space-y-6">
@@ -84,7 +90,19 @@ export default async function MatchDetail({
         return (
           <Card className="p-6 space-y-4">
             <h2 className="font-semibold">Live Stream</h2>
-            {isHost ? (
+            {isHost && otherBroadcaster ? (
+              <>
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-700 dark:text-amber-400">
+                  <p className="font-medium">
+                    {otherBroadcaster.name || otherBroadcaster.email} is currently broadcasting this match live.
+                  </p>
+                  <p className="text-amber-700/80 dark:text-amber-400/80">
+                    To switch broadcasting to this device, contact them to end the broadcast on their end.
+                  </p>
+                </div>
+                <StreamPlayer matchId={m.id} />
+              </>
+            ) : isHost ? (
               <StreamHost matchId={m.id} initialStatus={m.status} />
             ) : (
               <StreamPlayer matchId={m.id} />

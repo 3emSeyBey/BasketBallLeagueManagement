@@ -75,7 +75,8 @@ const CREATE = [
     status TEXT NOT NULL DEFAULT 'planned',
     home_score INTEGER NOT NULL DEFAULT 0,
     away_score INTEGER NOT NULL DEFAULT 0,
-    agora_channel TEXT
+    agora_channel TEXT,
+    broadcaster_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL
   );`,
   `CREATE TABLE brackets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
