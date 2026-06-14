@@ -45,8 +45,8 @@ export default async function MatchDetail({
           </h1>
           <p className="text-muted-foreground">
             {m.scheduledAt
-              ? `${new Date(m.scheduledAt).toLocaleString()} · ${m.venue}`
-              : `Unscheduled · ${m.venue}`}
+              ? `${new Date(m.scheduledAt).toLocaleString()}${m.venue ? ` · ${m.venue}` : ""}`
+              : "Not scheduled yet"}
           </p>
         </div>
         <MatchStatusBadge
@@ -114,8 +114,8 @@ export default async function MatchDetail({
           </div>
           <p className="text-sm text-muted-foreground">
             {m.scheduledAt
-              ? `${new Date(m.scheduledAt).toLocaleString()} · ${m.venue}`
-              : `Unscheduled · ${m.venue}`}
+              ? `${new Date(m.scheduledAt).toLocaleString()}${m.venue ? ` · ${m.venue}` : ""}`
+              : "This match doesn't have a schedule yet — add one above."}
           </p>
           {m.status === "ended" && (
             <p className="text-xs text-muted-foreground">
