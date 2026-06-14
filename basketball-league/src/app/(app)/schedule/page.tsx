@@ -6,9 +6,6 @@ import { getSession } from "@/lib/session";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { MatchRow } from "@/components/schedule/MatchRow";
-import { GenerateScheduleDialog } from "@/components/schedule/GenerateScheduleDialog";
-import { BracketReadView } from "@/components/canvas/BracketReadView";
-import { loadCanvas } from "@/lib/season-bracket-query";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +29,6 @@ export default async function SchedulePage() {
         .orderBy(matches.scheduledAt)
     : [];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
-  const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 
   return (
     <div className="space-y-6">
@@ -43,7 +39,6 @@ export default async function SchedulePage() {
         </div>
         {session.role === "admin" && season && (
           <div className="flex flex-col sm:flex-row gap-2">
-            <GenerateScheduleDialog seasonId={season.id} />
             <Link
               href="/schedule/new"
               className={buttonVariants({
@@ -64,18 +59,6 @@ export default async function SchedulePage() {
           </div>
         )}
       </div>
-
-      {view && activeSeason && (view.divisions.length > 0 || view.finals.matches.length > 0) && (
-        <Card className="p-6 space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">Bracket — {activeSeason.name}</h2>
-            {session.role === "admin" && (
-              <span className="text-xs text-muted-foreground">Open the canvas to edit</span>
-            )}
-          </div>
-          <BracketReadView view={view} />
-        </Card>
-      )}
 
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">

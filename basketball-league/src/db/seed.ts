@@ -5,22 +5,17 @@ import {
   seasons,
   players,
   matches,
-  seasonTeams,
   announcements,
   divisions,
-  teamDivisions,
-  finalsEliminations,
+  brackets,
+  bracketMatches,
 } from "./schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { createBracket, autoPlaceTeam, advanceWinner, loadBracketTree } from "@/lib/bracket-service";
 
 type Position = "PG" | "SG" | "SF" | "PF" | "C";
-
-type RosterEntry = {
-  name: string;
-  position: Position;
-  height: string;
-};
+type RosterEntry = { name: string; position: Position; height: string };
 
 const ORIGINAL_ROSTERS: Record<string, RosterEntry[]> = {
   "Bantayan Sharks": [
@@ -107,75 +102,8 @@ function generateRoster(): RosterEntry[] {
   return out;
 }
 
-const LEAGUE_DIVISIONS = ["North", "South", "East", "West"] as const;
-type LeagueDivision = (typeof LEAGUE_DIVISIONS)[number];
-
-const TEAMS_BY_DIVISION: Record<LeagueDivision, string[]> = {
-  North: [
-    "Bantayan Sharks",
-    "Cebu Cyclones",
-    "Mandaue Mavericks",
-    "Lapulapu Legends",
-  ],
-  South: [
-    "Madridejos Warriors",
-    "Talisay Titans",
-    "Toledo Tribunes",
-    "Naga Nighthawks",
-  ],
-  East: [
-    "Santa Fe Eagles",
-    "Carcar Crusaders",
-    "Argao Aces",
-    "Dalaguete Dragons",
-    "Borbon Bears",
-    "Dumanjug Devils",
-    "Tuburan Thunders",
-    "Sogod Storm",
-  ],
-  West: [
-    "Bantayan Bulls",
-    "Oslob Outlaws",
-    "Moalboal Marlins",
-    "Tabuelan Tigers",
-  ],
-};
-
-const TEAM_TO_MANAGER: Record<
-  string,
-  { email: string; username: string; name: string; contactNumber: string }
-> = {
-  "Bantayan Sharks": {
-    email: "manager@league.test",
-    username: "sharks_mgr",
-    name: "Sharks Manager",
-    contactNumber: "+63 911 111 1111",
-  },
-  "Madridejos Warriors": {
-    email: "warriors@league.test",
-    username: "warriors_mgr",
-    name: "Warriors Manager",
-    contactNumber: "+63 922 222 2222",
-  },
-  "Santa Fe Eagles": {
-    email: "eagles@league.test",
-    username: "eagles_mgr",
-    name: "Eagles Manager",
-    contactNumber: "+63 933 333 3333",
-  },
-  "Bantayan Bulls": {
-    email: "bulls@league.test",
-    username: "bulls_mgr",
-    name: "Bulls Manager",
-    contactNumber: "+63 944 444 4444",
-  },
-};
-
 function fakePhone(): string {
-  const n = String(Math.floor(100000000 + Math.random() * 899999999)).slice(
-    0,
-    9,
-  );
+  const n = String(Math.floor(100000000 + Math.random() * 899999999)).slice(0, 9);
   return `+63 9${n.slice(0, 2)} ${n.slice(2, 5)} ${n.slice(5)}`;
 }
 
@@ -186,404 +114,178 @@ function randomScore(): { home: number; away: number } {
   return { home, away };
 }
 
-async function main() {
-  const adminHash = await bcrypt.hash("admin123", 10);
-  const tmHash = await bcrypt.hash("manager123", 10);
+const VENUE = "Bantayan Sports Complex";
+const dayMs = 24 * 60 * 60 * 1000;
 
-  // 1. Seasons
-  await db
-    .insert(seasons)
-    .values([
-      {
-        name: "Season 2025",
-        startedAt: new Date(
-          Date.now() - 365 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
-        endedAt: new Date(
-          Date.now() - 300 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
-        status: "ended",
-      },
-      {
-        name: "Season 2026",
-        startedAt: new Date(
-          Date.now() - 14 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
-        status: "active",
-      },
-    ])
-    .onConflictDoNothing();
-  await db
-    .update(seasons)
-    .set({ status: "active" })
-    .where(eq(seasons.name, "Season 2026"));
-  await db
-    .update(seasons)
-    .set({ status: "ended" })
-    .where(eq(seasons.name, "Season 2025"));
+const MANAGERS: Record<string, { email: string; username: string; name: string }> = {
+  "Bantayan Sharks": { email: "manager@league.test", username: "sharks_mgr", name: "Sharks Manager" },
+  "Madridejos Warriors": { email: "warriors@league.test", username: "warriors_mgr", name: "Warriors Manager" },
+  "Santa Fe Eagles": { email: "eagles@league.test", username: "eagles_mgr", name: "Eagles Manager" },
+  "Bantayan Bulls": { email: "bulls@league.test", username: "bulls_mgr", name: "Bulls Manager" },
+};
 
-  // 2. League divisions (global)
-  await db
-    .insert(teamDivisions)
-    .values(LEAGUE_DIVISIONS.map((name) => ({ name })))
-    .onConflictDoNothing();
+// Division name -> team names. Four teams per division keeps a clean 2-round bracket.
+const SEASON_2026_DIVISIONS: Record<string, string[]> = {
+  North: ["Bantayan Sharks", "Cebu Cyclones", "Mandaue Mavericks", "Lapulapu Legends"],
+  South: ["Madridejos Warriors", "Talisay Titans", "Toledo Tribunes", "Naga Nighthawks"],
+  East: ["Santa Fe Eagles", "Carcar Crusaders", "Argao Aces", "Dalaguete Dragons"],
+  West: ["Bantayan Bulls", "Oslob Outlaws", "Moalboal Marlins", "Tabuelan Tigers"],
+};
 
-  // 3. Teams (assigned to global divisions)
-  const allTeamRows: { name: string; division: string }[] = [];
-  for (const div of LEAGUE_DIVISIONS) {
-    for (const teamName of TEAMS_BY_DIVISION[div]) {
-      allTeamRows.push({ name: teamName, division: div });
-    }
-  }
-  await db.insert(teams).values(allTeamRows).onConflictDoNothing();
+const SEASON_2025_DIVISIONS: Record<string, string[]> = {
+  Open: ["Cebu Classic '25", "Mactan Masters '25", "Liloan Lions '25", "Minglanilla Monarchs '25"],
+};
 
-  // Make sure existing teams' division text matches new layout
-  for (const t of allTeamRows) {
-    await db
-      .update(teams)
-      .set({ division: t.division })
-      .where(eq(teams.name, t.name));
-  }
-
-  // 4. Admin user
-  await db
-    .insert(users)
-    .values({
-      email: "admin@league.test",
-      username: "admin",
-      name: "League Admin",
-      contactNumber: "+63 900 000 0000",
-      passwordHash: adminHash,
-      role: "admin",
-    })
-    .onConflictDoNothing();
-
-  const allTeams = await db.select().from(teams);
-
-  // 5. Managers — only original four teams keep human-named managers
-  for (const team of allTeams) {
-    const mgr = TEAM_TO_MANAGER[team.name];
-    if (!mgr) continue;
-    await db
-      .insert(users)
-      .values({
-        email: mgr.email,
-        username: mgr.username,
-        name: mgr.name,
-        contactNumber: mgr.contactNumber,
-        passwordHash: tmHash,
-        role: "team_manager",
-        teamId: team.id,
-      })
-      .onConflictDoNothing();
-    await db
-      .update(users)
-      .set({ teamId: team.id })
-      .where(eq(users.email, mgr.email));
-  }
-
-  // 6. Players — original rosters or generated
-  for (const team of allTeams) {
-    const roster = ORIGINAL_ROSTERS[team.name] ?? generateRoster();
-    await db.delete(players).where(eq(players.teamId, team.id));
-    await db.insert(players).values(
-      roster.map((p, idx) => ({
-        teamId: team.id,
-        name: p.name,
-        jerseyNumber: idx + 1,
-        position: p.position,
-        height: p.height,
-        contactNumber: fakePhone(),
-      })),
-    );
-  }
-
-  // Tidy stale seasons
-  await db.delete(seasons).where(eq(seasons.name, "Regular Season 2026"));
-  await db.delete(seasons).where(eq(seasons.name, "Playoffs 2026"));
-
-  const adminUser = await db.query.users.findFirst({
-    where: eq(users.role, "admin"),
-  });
-  if (!adminUser) throw new Error("Admin user not seeded");
-
-  const season2025 = await db.query.seasons.findFirst({
-    where: eq(seasons.name, "Season 2025"),
-  });
-  const season2026 = await db.query.seasons.findFirst({
-    where: eq(seasons.name, "Season 2026"),
-  });
-  if (!season2025 || !season2026) throw new Error("Seasons not seeded");
-
-  await db.delete(announcements);
-
-  // Map teams by name → row for quick lookup in seedSeason
-  const teamsByName = new Map(allTeams.map((t) => [t.name, t]));
-
-  await seedSeason({
-    season: season2025,
-    teamsByName,
-    adminId: adminUser.id,
-    completion: "all",
-    startDaysAgo: 60,
-  });
-
-  await seedSeason({
-    season: season2026,
-    teamsByName,
-    adminId: adminUser.id,
-    completion: "ongoing",
-    startDaysAgo: 14,
-  });
-
-  console.log("Seed complete.");
+async function createPlayers(teamId: number, teamName: string) {
+  const roster = ORIGINAL_ROSTERS[teamName] ?? generateRoster();
+  await db.insert(players).values(
+    roster.map((p, idx) => ({
+      teamId,
+      name: p.name,
+      jerseyNumber: idx + 1,
+      position: p.position,
+      height: p.height,
+      contactNumber: fakePhone(),
+    })),
+  );
 }
 
-type Completion = "all" | "ongoing";
+async function playMatch(matchId: number, scheduledAt: string) {
+  const score = randomScore();
+  await db.update(matches)
+    .set({ homeScore: score.home, awayScore: score.away, status: "ended", scheduledAt, venue: VENUE })
+    .where(eq(matches.id, matchId));
+  await advanceWinner(db, matchId);
+}
 
-type SeasonTeam = { id: number; name: string };
-
-async function seedSeason(opts: {
-  season: { id: number; name: string };
-  teamsByName: Map<string, SeasonTeam>;
-  adminId: number;
-  completion: Completion;
+// Build a division: create teams (auto-placed into a default published bracket),
+// players, then optionally play it out.
+async function seedDivision(opts: {
+  seasonId: number;
+  divisionName: string;
+  teamNames: string[];
+  managerHash: string;
+  play: "all" | "round1" | "none";
   startDaysAgo: number;
-}) {
-  const { season, teamsByName, adminId, completion, startDaysAgo } = opts;
-  const dayMs = 24 * 60 * 60 * 1000;
+  adminId: number;
+}): Promise<{ championName: string | null }> {
+  const { seasonId, divisionName, teamNames, managerHash, play, startDaysAgo, adminId } = opts;
 
-  // Reset season state
-  await db.delete(matches).where(eq(matches.seasonId, season.id));
-  await db.delete(seasonTeams).where(eq(seasonTeams.seasonId, season.id));
-  await db.delete(divisions).where(eq(divisions.seasonId, season.id));
-  await db
-    .delete(finalsEliminations)
-    .where(eq(finalsEliminations.seasonId, season.id));
+  const [division] = await db.insert(divisions).values({ seasonId, name: divisionName }).returning();
+  const bracket = await createBracket(db, {
+    divisionId: division.id,
+    title: `${divisionName} Bracket`,
+    isDefault: true,
+  });
 
-  // Create per-season divisions mirroring league divisions
-  await db.insert(divisions).values(
-    LEAGUE_DIVISIONS.map((name) => ({ seasonId: season.id, name })),
-  );
-  const divRows = await db
-    .select()
-    .from(divisions)
-    .where(eq(divisions.seasonId, season.id));
-  const divIdByName = new Map(divRows.map((d) => [d.name, d.id]));
+  const teamIdByName = new Map<string, number>();
+  for (const name of teamNames) {
+    const [team] = await db.insert(teams).values({ name, divisionId: division.id }).returning();
+    teamIdByName.set(name, team.id);
+    await createPlayers(team.id, name);
+    // Attach a manager for the headline teams.
+    const mgr = MANAGERS[name];
+    if (mgr) {
+      await db.insert(users).values({
+        email: mgr.email, username: mgr.username, name: mgr.name,
+        contactNumber: fakePhone(), passwordHash: managerHash,
+        role: "team_manager", teamId: team.id,
+      }).onConflictDoNothing();
+    }
+    // New team joins the default bracket's round 1 automatically.
+    await autoPlaceTeam(db, division.id, team.id);
+  }
 
-  // Enroll teams per division
-  for (const div of LEAGUE_DIVISIONS) {
-    const divisionId = divIdByName.get(div)!;
-    for (const teamName of TEAMS_BY_DIVISION[div]) {
-      const team = teamsByName.get(teamName);
-      if (!team) continue;
-      await db.insert(seasonTeams).values({
-        seasonId: season.id,
-        teamId: team.id,
-        divisionId,
+  await db.update(brackets).set({ isPublished: true }).where(eq(brackets.id, bracket.id));
+
+  if (play === "none") return { championName: null };
+
+  // Play round 1, then (optionally) the final, using the bracket structure.
+  const teamName = new Map([...teamIdByName.entries()].map(([n, id]) => [id, n]));
+  const r1At = new Date(Date.now() - startDaysAgo * dayMs).toISOString();
+  let tree = await loadBracketTree(db, bracket.id);
+  for (const box of tree.rounds[0] ?? []) {
+    if (box.homeTeamId && box.awayTeamId) await playMatch(box.matchId, r1At);
+  }
+
+  let championName: string | null = null;
+  if (play === "all") {
+    const finalAt = new Date(Date.now() - (startDaysAgo - 5) * dayMs).toISOString();
+    tree = await loadBracketTree(db, bracket.id); // reload: winners advanced into the final box
+    const finalRound = tree.rounds[tree.rounds.length - 1] ?? [];
+    for (const box of finalRound) {
+      if (box.homeTeamId && box.awayTeamId) {
+        await playMatch(box.matchId, finalAt);
+        const fresh = await db.query.matches.findFirst({ where: eq(matches.id, box.matchId) });
+        if (fresh) {
+          const winnerId = fresh.homeScore > fresh.awayScore ? fresh.homeTeamId : fresh.awayTeamId;
+          championName = winnerId ? teamName.get(winnerId) ?? null : null;
+        }
+      }
+    }
+    if (championName) {
+      await db.insert(announcements).values({
+        title: `${championName} win the ${divisionName} bracket`,
+        body: `<p>🏆 <strong>${championName}</strong> are the ${divisionName} champions.</p>`,
+        createdBy: adminId,
       });
     }
   }
+  return { championName };
+}
 
-  // Per division: 4-team single-elimination bracket
-  // Day startDaysAgo: 2 semis (stage='playoff')
-  // Day (startDaysAgo - 5): division-final (stage='playoff', isDivisionFinal=true)
-  const divisionWinners: Record<LeagueDivision, SeasonTeam | null> = {
-    North: null,
-    South: null,
-    East: null,
-    West: null,
-  };
+async function main() {
+  // Clean slate (children cascade from seasons; teams/brackets cascade from divisions).
+  await db.delete(announcements);
+  await db.delete(bracketMatches);
+  await db.delete(brackets);
+  await db.delete(matches);
+  await db.delete(players);
+  await db.update(users).set({ teamId: null });
+  await db.delete(teams);
+  await db.delete(divisions);
+  await db.delete(seasons);
+  await db.delete(users);
 
-  for (const div of LEAGUE_DIVISIONS) {
-    const divisionId = divIdByName.get(div)!;
-    const teamNames = TEAMS_BY_DIVISION[div];
-    const teamList = teamNames
-      .map((n) => teamsByName.get(n))
-      .filter((t): t is SeasonTeam => !!t);
-    // Require power-of-2 team count (2, 4, 8, 16, ...)
-    if (teamList.length < 2) continue;
-    if ((teamList.length & (teamList.length - 1)) !== 0) continue;
+  const adminHash = await bcrypt.hash("admin123", 10);
+  const managerHash = await bcrypt.hash("manager123", 10);
 
-    const totalRounds = Math.log2(teamList.length);
-    let current: SeasonTeam[] = [...teamList];
-    let resolvedWinner: SeasonTeam | null = null;
+  const [admin] = await db.insert(users).values({
+    email: "admin@league.test", username: "admin", name: "League Admin",
+    contactNumber: "+63 900 000 0000", passwordHash: adminHash, role: "admin",
+  }).returning();
 
-    for (let roundIdx = 1; roundIdx <= totalRounds; roundIdx++) {
-      const isDivFinal = roundIdx === totalRounds;
-      const past = startDaysAgo - 1 - (roundIdx - 1) * 5;
-      // For ongoing seasons, push the division final into the future
-      const scheduledAt =
-        completion === "ongoing" && isDivFinal
-          ? new Date(Date.now() + 5 * dayMs).toISOString()
-          : new Date(Date.now() - past * dayMs).toISOString();
+  // Season 2026 — active. Each division has a published default bracket; round 1
+  // already played in every division, finals still upcoming.
+  const [s2026] = await db.insert(seasons).values({
+    name: "Season 2026",
+    startedAt: new Date(Date.now() - 14 * dayMs).toISOString(),
+    status: "active",
+  }).returning();
 
-      const next: SeasonTeam[] = [];
-      for (let pair = 0; pair < current.length; pair += 2) {
-        const home = current[pair];
-        const away = current[pair + 1];
-        const [m] = await db
-          .insert(matches)
-          .values({
-            seasonId: season.id,
-            divisionId,
-            homeTeamId: home.id,
-            awayTeamId: away.id,
-            scheduledAt,
-            venue: "Bantayan Sports Complex",
-            stage: "playoff",
-            round: roundIdx,
-            isDivisionFinal: isDivFinal,
-            agoraChannel: `match-${season.id}-${divisionId}-r${roundIdx}-${pair / 2}`,
-          })
-          .returning();
-
-        const shouldFinalize =
-          completion === "all" || !isDivFinal; // ongoing keeps only the div final scheduled
-
-        if (shouldFinalize) {
-          const score = randomScore();
-          const winner = score.home >= score.away ? home : away;
-          const loser = winner.id === home.id ? away : home;
-          await db
-            .update(matches)
-            .set({
-              homeScore: score.home,
-              awayScore: score.away,
-              status: "ended",
-            })
-            .where(eq(matches.id, m.id));
-          next.push(winner);
-          if (isDivFinal) {
-            resolvedWinner = winner;
-            await db.insert(announcements).values({
-              title: `${winner.name} take ${div} in ${season.name}`,
-              body: `<p><strong>${winner.name}</strong> defeated <strong>${loser.name}</strong> ${Math.max(score.home, score.away)}–${Math.min(score.home, score.away)} in the ${div} division final.</p>`,
-              createdBy: adminId,
-            });
-          }
-        } else {
-          // ongoing + isDivFinal: leave scheduled, advance home tentatively
-          next.push(home);
-        }
-      }
-      current = next;
-    }
-
-    divisionWinners[div] = resolvedWinner ?? current[0] ?? null;
-  }
-
-  // Finals: 4-team SE between division winners
-  // Semifinals: North vs South, East vs West (stage='playoff', divisionId=null)
-  // Championship: stage='final', divisionId=null, isSeasonFinal=true
-  const semisAt = new Date(
-    Date.now() - (startDaysAgo - 12) * dayMs,
-  ).toISOString();
-  const champAt = new Date(
-    Date.now() - (startDaysAgo - 18) * dayMs,
-  ).toISOString();
-
-  const wNorth = divisionWinners.North;
-  const wSouth = divisionWinners.South;
-  const wEast = divisionWinners.East;
-  const wWest = divisionWinners.West;
-  if (!wNorth || !wSouth || !wEast || !wWest) return;
-
-  const [fSf1] = await db
-    .insert(matches)
-    .values({
-      seasonId: season.id,
-      divisionId: null,
-      homeTeamId: wNorth.id,
-      awayTeamId: wSouth.id,
-      scheduledAt: semisAt,
-      venue: "Bantayan Sports Complex",
-      stage: "playoff",
-      round: 3,
-      agoraChannel: `match-${season.id}-finals-sf1`,
-    })
-    .returning();
-  const [fSf2] = await db
-    .insert(matches)
-    .values({
-      seasonId: season.id,
-      divisionId: null,
-      homeTeamId: wEast.id,
-      awayTeamId: wWest.id,
-      scheduledAt: semisAt,
-      venue: "Bantayan Sports Complex",
-      stage: "playoff",
-      round: 3,
-      agoraChannel: `match-${season.id}-finals-sf2`,
-    })
-    .returning();
-
-  if (completion === "all") {
-    const f1 = randomScore();
-    const f2 = randomScore();
-    const fSf1Winner = f1.home >= f1.away ? wNorth : wSouth;
-    const fSf2Winner = f2.home >= f2.away ? wEast : wWest;
-    await db
-      .update(matches)
-      .set({
-        homeScore: f1.home,
-        awayScore: f1.away,
-        status: "ended",
-      })
-      .where(eq(matches.id, fSf1.id));
-    await db
-      .update(matches)
-      .set({
-        homeScore: f2.home,
-        awayScore: f2.away,
-        status: "ended",
-      })
-      .where(eq(matches.id, fSf2.id));
-
-    const [champ] = await db
-      .insert(matches)
-      .values({
-        seasonId: season.id,
-        divisionId: null,
-        homeTeamId: fSf1Winner.id,
-        awayTeamId: fSf2Winner.id,
-        scheduledAt: champAt,
-        venue: "Bantayan Sports Complex",
-        stage: "final",
-        round: 4,
-        isSeasonFinal: true,
-        agoraChannel: `match-${season.id}-finals-champ`,
-      })
-      .returning();
-    const cs = randomScore();
-    const champion = cs.home >= cs.away ? fSf1Winner : fSf2Winner;
-    const runnerUp =
-      champion.id === fSf1Winner.id ? fSf2Winner : fSf1Winner;
-    await db
-      .update(matches)
-      .set({ homeScore: cs.home, awayScore: cs.away, status: "ended" })
-      .where(eq(matches.id, champ.id));
-    await db.insert(announcements).values({
-      title: `${champion.name} crowned ${season.name} champions`,
-      body: `<p><strong>${champion.name}</strong> beat <strong>${runnerUp.name}</strong> ${Math.max(cs.home, cs.away)}–${Math.min(cs.home, cs.away)} in the Finals!</p>`,
-      createdBy: adminId,
-    });
-  } else {
-    // Ongoing: schedule championship in the future, both finals semis already inserted as scheduled.
-    const futureAt = new Date(Date.now() + 7 * dayMs).toISOString();
-    await db.insert(matches).values({
-      seasonId: season.id,
-      divisionId: null,
-      homeTeamId: wNorth.id,
-      awayTeamId: wEast.id,
-      scheduledAt: futureAt,
-      venue: "Bantayan Sports Complex",
-      stage: "final",
-      round: 4,
-      isSeasonFinal: true,
-      agoraChannel: `match-${season.id}-finals-champ`,
+  for (const [divisionName, teamNames] of Object.entries(SEASON_2026_DIVISIONS)) {
+    await seedDivision({
+      seasonId: s2026.id, divisionName, teamNames, managerHash,
+      play: "round1", startDaysAgo: 3, adminId: admin.id,
     });
   }
+
+  // Season 2025 — ended, fully played with a crowned champion.
+  const [s2025] = await db.insert(seasons).values({
+    name: "Season 2025",
+    startedAt: new Date(Date.now() - 365 * dayMs).toISOString(),
+    endedAt: new Date(Date.now() - 300 * dayMs).toISOString(),
+    status: "ended",
+  }).returning();
+
+  for (const [divisionName, teamNames] of Object.entries(SEASON_2025_DIVISIONS)) {
+    await seedDivision({
+      seasonId: s2025.id, divisionName, teamNames, managerHash: await bcrypt.hash("x", 4),
+      play: "all", startDaysAgo: 310, adminId: admin.id,
+    });
+  }
+
+  console.log("Seed complete.");
 }
 
 main().catch((e) => {

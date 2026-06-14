@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { Volleyball } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, players, users } from "@/db/schema";
+import { teams, players, users, divisions } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,6 +17,10 @@ export default async function PublicTeamDetail({
   const { id } = await params;
   const team = await db.query.teams.findFirst({ where: eq(teams.id, Number(id)) });
   if (!team) notFound();
+  const division = await db.query.divisions.findFirst({
+    where: eq(divisions.id, team.divisionId),
+  });
+  const divisionName = division?.name ?? "Unassigned";
 
   const [roster, managers] = await Promise.all([
     db
@@ -57,7 +61,7 @@ export default async function PublicTeamDetail({
           )}
           <div>
             <h1 className="text-3xl font-semibold">{team.name}</h1>
-            <Badge variant="outline">Division {team.division}</Badge>
+            <Badge variant="outline">Division {divisionName}</Badge>
           </div>
         </div>
       </div>

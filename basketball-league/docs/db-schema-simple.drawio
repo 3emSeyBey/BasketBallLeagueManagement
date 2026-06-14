@@ -1,0 +1,108 @@
+<mxfile host="app.diagrams.net" modified="2026-05-02T00:00:00.000Z" agent="Claude" version="24.0.0">
+  <diagram name="DB Schema" id="db-schema">
+    <mxGraphModel dx="1800" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="users" value="&lt;b&gt;users&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;email UQ&lt;br/&gt;username UQ&lt;br/&gt;name&lt;br/&gt;password_hash&lt;br/&gt;role ENUM&lt;br/&gt;FK team_id&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="teams" value="&lt;b&gt;teams&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;name UQ&lt;br/&gt;division&lt;br/&gt;image_mime_type&lt;br/&gt;image_data&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;verticalAlign=top;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="700" y="40" width="200" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="team_divisions" value="&lt;b&gt;team_divisions&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;name UQ&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="40" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="players" value="&lt;b&gt;players&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK team_id&lt;br/&gt;name&lt;br/&gt;jersey_number&lt;br/&gt;position ENUM&lt;br/&gt;height&lt;br/&gt;contact_number&lt;br/&gt;image_mime_type&lt;br/&gt;image_data&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="380" width="200" height="210" as="geometry" />
+        </mxCell>
+
+        <mxCell id="seasons" value="&lt;b&gt;seasons&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;name UQ&lt;br/&gt;started_at&lt;br/&gt;ended_at&lt;br/&gt;status ENUM&lt;br/&gt;bracket_type&lt;br/&gt;third_place_match&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="700" y="380" width="200" height="160" as="geometry" />
+        </mxCell>
+
+        <mxCell id="divisions" value="&lt;b&gt;divisions&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK season_id&lt;br/&gt;name&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="380" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="season_teams" value="&lt;b&gt;season_teams&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK season_id&lt;br/&gt;FK team_id&lt;br/&gt;FK division_id&lt;br/&gt;seed&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="700" y="700" width="200" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="matches" value="&lt;b&gt;matches&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK season_id&lt;br/&gt;FK division_id&lt;br/&gt;FK home_team_id&lt;br/&gt;FK away_team_id&lt;br/&gt;scheduled_at&lt;br/&gt;venue&lt;br/&gt;status ENUM&lt;br/&gt;home_score&lt;br/&gt;away_score&lt;br/&gt;agora_channel&lt;br/&gt;round&lt;br/&gt;stage ENUM&lt;br/&gt;is_division_final&lt;br/&gt;is_season_final&lt;br/&gt;bracket_position&lt;br/&gt;FK next_match_id&lt;br/&gt;next_match_slot&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="700" width="200" height="340" as="geometry" />
+        </mxCell>
+
+        <mxCell id="finals_eliminations" value="&lt;b&gt;finals_eliminations&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK season_id&lt;br/&gt;FK team_id&lt;br/&gt;eliminated_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="announcements" value="&lt;b&gt;announcements&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;title&lt;br/&gt;body&lt;br/&gt;FK created_by&lt;br/&gt;created_at&lt;br/&gt;updated_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="940" width="200" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="announcement_images" value="&lt;b&gt;announcement_images&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK id&lt;br/&gt;FK announcement_id&lt;br/&gt;mime_type&lt;br/&gt;data&lt;br/&gt;FK created_by&lt;br/&gt;created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="700" y="940" width="200" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;hr size=&quot;1&quot;/&gt;&lt;div align=&quot;left&quot;&gt;PK = Primary Key&lt;br/&gt;FK = Foreign Key&lt;br/&gt;UQ = Unique&lt;br/&gt;&lt;br/&gt;Edge: many → one&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1360" y="200" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="users" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#82b366;" edge="1" parent="1" source="players" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#b85450;" edge="1" parent="1" source="divisions" target="seasons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="season_teams" target="seasons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="season_teams" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="season_teams" target="divisions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="matches" target="seasons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="matches" target="divisions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="matches" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.2;exitDx=0;exitDy=0;entryX=1;entryY=0.6;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;dashed=1;" edge="1" parent="1" source="matches" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.95;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#9673a6;" edge="1" parent="1" source="matches" target="matches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#d79b00;" edge="1" parent="1" source="finals_eliminations" target="seasons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#d79b00;dashed=1;" edge="1" parent="1" source="finals_eliminations" target="teams">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="announcements" target="users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=entityRelationEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#6c8ebf;" edge="1" parent="1" source="announcement_images" target="announcements">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;startArrow=ERmany;endArrow=ERone;startFill=0;endFill=0;strokeColor=#6c8ebf;dashed=1;" edge="1" parent="1" source="announcement_images" target="users">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -3,8 +3,6 @@ import { db } from "@/db/client";
 import { matches, teams, seasons } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { MatchRow } from "@/components/schedule/MatchRow";
-import { BracketReadView } from "@/components/canvas/BracketReadView";
-import { loadCanvas } from "@/lib/season-bracket-query";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +21,6 @@ export default async function PublicSchedule() {
         .orderBy(matches.scheduledAt)
     : [];
   const teamById = new Map(allTeams.map((t) => [t.id, t]));
-  const view = activeSeason ? await loadCanvas(activeSeason.id) : null;
 
   return (
     <div className="space-y-6">
@@ -31,15 +28,6 @@ export default async function PublicSchedule() {
         <h1 className="text-3xl font-semibold">Schedule</h1>
         <p className="text-muted-foreground">{allMatches.length} matches</p>
       </div>
-
-      {view && activeSeason && (view.divisions.length > 0 || view.finals.matches.length > 0) && (
-        <Card className="p-6 space-y-3">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">Bracket — {activeSeason.name}</h2>
-          </div>
-          <BracketReadView view={view} linkBase="/public/schedule" />
-        </Card>
-      )}
 
       <Card className="p-0 overflow-hidden">
         <div className="overflow-x-auto">

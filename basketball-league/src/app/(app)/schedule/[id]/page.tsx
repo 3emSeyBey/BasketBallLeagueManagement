@@ -102,7 +102,7 @@ export default async function MatchDetail({
                 <ScheduleEditDialog
                   matchId={m.id}
                   initialScheduledAt={m.scheduledAt}
-                  initialVenue={m.venue}
+                  initialVenue={m.venue ?? ""}
                 />
                 <DeleteMatchButton
                   matchId={m.id}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { asc } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, teamDivisions } from "@/db/schema";
+import { teams, divisions } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { TeamCard } from "@/components/teams/TeamCard";
@@ -18,18 +18,23 @@ export default async function TeamsPage() {
 
   const [allTeams, divs] = await Promise.all([
     db.select().from(teams).orderBy(asc(teams.name)),
-    db.select().from(teamDivisions).orderBy(asc(teamDivisions.name)),
+    db.select().from(divisions).orderBy(asc(divisions.name)),
   ]);
 
-  // Group teams by division name. Divisions without rows still render.
-  const grouped = new Map<string, typeof allTeams>(
-    divs.map((d) => [d.name, []]),
-  );
-  for (const t of allTeams) {
-    if (!grouped.has(t.division)) grouped.set(t.division, []);
-    grouped.get(t.division)!.push(t);
-  }
+  // Map divisionId -> division name, and keep one division row per name for
+  // rename support.
+  const divNameById = new Map(divs.map((d) => [d.id, d.name]));
   const divByName = new Map(divs.map((d) => [d.name, d]));
+
+  type CardTeam = (typeof allTeams)[number] & { division: string };
+
+  // Group teams by division name. Divisions without rows still render.
+  const grouped = new Map<string, CardTeam[]>(divs.map((d) => [d.name, []]));
+  for (const t of allTeams) {
+    const divName = divNameById.get(t.divisionId) ?? "Unassigned";
+    if (!grouped.has(divName)) grouped.set(divName, []);
+    grouped.get(divName)!.push({ ...t, division: divName });
+  }
 
   return (
     <div className="space-y-6">

@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type Initial = { name?: string; division?: string };
+type Initial = { name?: string; divisionId?: number };
 type Manager = { id: number; email: string; name?: string | null };
+type DivisionOption = { id: number; label: string };
 
 function managerLabel(m: Manager): string {
   return m.name && m.name.trim() ? `${m.name} (${m.email})` : m.email;
@@ -27,21 +28,19 @@ export function TeamForm({
   id,
   initial,
   unassignedManagers: initialManagers = [],
-  divisions: initialDivisions = [],
   hasExistingImage = false,
 }: {
   id?: number;
   initial?: Initial;
   unassignedManagers?: Manager[];
-  divisions?: string[];
   hasExistingImage?: boolean;
 }) {
   const router = useRouter();
   const [name, setName] = useState(initial?.name ?? "");
-  const [division, setDivision] = useState<string>(
-    initial?.division ?? initialDivisions[0] ?? "",
+  const [divisionId, setDivisionId] = useState<string>(
+    initial?.divisionId != null ? String(initial.divisionId) : "",
   );
-  const [divisions, setDivisions] = useState<string[]>(initialDivisions);
+  const [divisions, setDivisions] = useState<DivisionOption[]>([]);
   const [managerId, setManagerId] = useState<string>("");
   const [managers, setManagers] = useState<Manager[]>(initialManagers);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -70,12 +69,22 @@ export function TeamForm({
     let cancelled = false;
     void (async () => {
       try {
-        const res = await fetch("/api/team-divisions", { cache: "no-store" });
+        const res = await fetch("/api/divisions", { cache: "no-store" });
         if (!res.ok || cancelled) return;
-        const data: { id: number; name: string }[] = await res.json();
+        const data: {
+          id: number;
+          name: string;
+          seasonId: number;
+          seasonName: string;
+          seasonStatus: string;
+        }[] = await res.json();
         if (cancelled) return;
-        setDivisions(data.map((d) => d.name));
-        setDivision((prev) => prev || data[0]?.name || "");
+        const options = data.map((d) => ({
+          id: d.id,
+          label: `${d.seasonName} — ${d.name}`,
+        }));
+        setDivisions(options);
+        setDivisionId((prev) => prev || (options[0] ? String(options[0].id) : ""));
       } catch {}
     })();
     return () => {
@@ -159,13 +168,16 @@ export function TeamForm({
       setErr("Pick a manager");
       return;
     }
-    if (!division) {
+    if (!divisionId) {
       setBusy(false);
       setErr("Pick a division");
       return;
     }
     const url = id ? `/api/teams/${id}` : "/api/teams";
-    const body: Record<string, unknown> = { name, division };
+    const body: Record<string, unknown> = {
+      name,
+      divisionId: Number(divisionId),
+    };
     if (isCreate) body.managerId = Number(managerId);
     const res = await fetch(url, {
       method: id ? "PATCH" : "POST",
@@ -278,14 +290,17 @@ export function TeamForm({
             first.
           </p>
         ) : (
-          <Select value={division} onValueChange={(v) => setDivision(v ?? "")}>
+          <Select
+            value={divisionId}
+            onValueChange={(v) => setDivisionId(v ?? "")}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Pick a division" />
             </SelectTrigger>
             <SelectContent>
               {divisions.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {d.label}
                 </SelectItem>
               ))}
             </SelectContent>

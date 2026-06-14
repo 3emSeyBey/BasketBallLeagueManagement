@@ -1,0 +1,10 @@
+in login, add register in team manager
+in schedule minimize the view and make the bracketing show only when needed and on the table, make the live matches appear on top
+remove auto generate, fix bracketing based on NBA
+Whoever is logged in as team manager will only show in the table the matches of their team
+The End Match button should be placed inside the scoreboard at the center bottom
+Add +1 in the score
+
+Active Season to Active Leagues
+
+

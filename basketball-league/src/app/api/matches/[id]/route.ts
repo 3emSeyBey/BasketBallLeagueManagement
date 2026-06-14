@@ -2,15 +2,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches, seasons } from "@/db/schema";
+import { matches } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import {
   announceMatchResult,
   announceChampion,
   announceScheduleChange,
-  advanceBracketWinner,
 } from "@/lib/announcement-events";
+import { advanceWinner } from "@/lib/bracket-service";
 
 const Update = z.object({
   scheduledAt: z.string().datetime().nullable().optional(),
@@ -49,13 +49,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     await announceScheduleChange(idNum, before.scheduledAt, before.venue);
   }
 
-  // Match transitioned to final → advance + announcements
+  // Match ended → announce result, advance bracket winner, announce champion
+  // if it was a bracket final (no next round to feed).
   if (before.status !== "ended" && row.status === "ended") {
     await announceMatchResult(idNum);
-    const { championTeamId, seasonId } = await advanceBracketWinner(idNum);
-    if (championTeamId && seasonId) {
-      await announceChampion(seasonId, championTeamId);
-      await db.update(seasons).set({ status: "ended", endedAt: new Date().toISOString() }).where(eq(seasons.id, seasonId));
+    const { championTeamId } = await advanceWinner(db, idNum);
+    if (championTeamId) {
+      await announceChampion(row.seasonId, championTeamId);
     }
   }
 

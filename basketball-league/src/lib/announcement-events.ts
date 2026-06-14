@@ -22,12 +22,9 @@ export async function announceMatchResult(matchId: number) {
   const winScore = winner.id === home.id ? m.homeScore : m.awayScore;
   const loseScore = winner.id === home.id ? m.awayScore : m.homeScore;
 
-  const roundLabel = m.round ? await roundLabelAsync(m.round, m.seasonId) : "";
   const seasonLabel = season ? ` — ${season.name}` : "";
-  const title = m.round
-    ? `${winner.name} advance past ${loser.name} in ${roundLabel}`
-    : `${winner.name} defeat ${loser.name}`;
-  const body = `<p><strong>${winner.name}</strong> beat <strong>${loser.name}</strong> ${winScore}–${loseScore}${roundLabel ? ` in the ${roundLabel}` : ""}${seasonLabel}.</p>`;
+  const title = `${winner.name} defeat ${loser.name}`;
+  const body = `<p><strong>${winner.name}</strong> beat <strong>${loser.name}</strong> ${winScore}–${loseScore}${seasonLabel}.</p>`;
 
   const authorId = await systemAuthorId();
   if (authorId == null) return;
@@ -77,39 +74,3 @@ export async function announceScheduleChange(matchId: number, prevDate: string |
   });
 }
 
-async function roundLabelAsync(round: number, seasonId: number): Promise<string> {
-  const all = await db.select({ round: matches.round }).from(matches).where(eq(matches.seasonId, seasonId));
-  const totalRounds = all.reduce((m, r) => Math.max(m, r.round ?? 0), 0);
-  const fromEnd = totalRounds - round;
-  if (fromEnd === 0) return "Final";
-  if (fromEnd === 1) return "Semifinals";
-  if (fromEnd === 2) return "Quarterfinals";
-  return `Round ${round}`;
-}
-
-/**
- * After a bracket match goes final, advance the winner to the next match slot.
- * Returns champion teamId if this was the final match (no nextMatchId).
- */
-export async function advanceBracketWinner(matchId: number): Promise<{ championTeamId?: number; seasonId?: number }> {
-  const m = await db.query.matches.findFirst({ where: eq(matches.id, matchId) });
-  if (!m || m.status !== "ended" || m.homeTeamId == null || m.awayTeamId == null) return {};
-  const winnerId = m.homeScore > m.awayScore ? m.homeTeamId : m.awayTeamId;
-
-  if (m.nextMatchId == null) {
-    // Final match — winner is champion if this match is the highest round in the season
-    const all = await db.select({ round: matches.round }).from(matches).where(eq(matches.seasonId, m.seasonId));
-    const totalRounds = all.reduce((acc, r) => Math.max(acc, r.round ?? 0), 0);
-    if (m.round === totalRounds) {
-      return { championTeamId: winnerId, seasonId: m.seasonId };
-    }
-    return {};
-  }
-
-  const slot = m.nextMatchSlot ?? "home";
-  await db.update(matches)
-    .set(slot === "home" ? { homeTeamId: winnerId } : { awayTeamId: winnerId })
-    .where(eq(matches.id, m.nextMatchId));
-
-  return {};
-}

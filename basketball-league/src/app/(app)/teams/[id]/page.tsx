@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { Volleyball } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, players, users } from "@/db/schema";
+import { teams, players, users, divisions } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TeamForm } from "@/components/teams/TeamForm";
@@ -16,6 +16,10 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
   if (!session) redirect("/login");
   const team = await db.query.teams.findFirst({ where: eq(teams.id, Number(id)) });
   if (!team) notFound();
+  const division = await db.query.divisions.findFirst({
+    where: eq(divisions.id, team.divisionId),
+  });
+  const divisionName = division?.name ?? "Unassigned";
   const [roster, managers] = await Promise.all([
     db.select({
       id: players.id,
@@ -53,7 +57,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
           )}
           <div>
             <h1 className="text-3xl font-semibold">{team.name}</h1>
-            <Badge variant="outline">Division {team.division}</Badge>
+            <Badge variant="outline">Division {divisionName}</Badge>
           </div>
         </div>
       </div>
@@ -114,7 +118,7 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
             <h2 className="font-semibold">Edit Team</h2>
             <TeamForm
               id={team.id}
-              initial={{ name: team.name, division: team.division }}
+              initial={{ name: team.name, divisionId: team.divisionId }}
               hasExistingImage={!!team.imageMimeType}
             />
           </Card>

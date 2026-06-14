@@ -1,6 +1,6 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, teamDivisions } from "@/db/schema";
+import { teams, divisions } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { TeamCard } from "@/components/teams/TeamCard";
 
@@ -9,15 +9,18 @@ export const dynamic = "force-dynamic";
 export default async function PublicTeams() {
   const [allTeams, divs] = await Promise.all([
     db.select().from(teams).orderBy(asc(teams.name)),
-    db.select().from(teamDivisions).orderBy(asc(teamDivisions.name)),
+    db.select().from(divisions).orderBy(asc(divisions.name)),
   ]);
 
-  const grouped = new Map<string, typeof allTeams>(
-    divs.map((d) => [d.name, []]),
-  );
+  const divNameById = new Map(divs.map((d) => [d.id, d.name]));
+
+  type CardTeam = (typeof allTeams)[number] & { division: string };
+
+  const grouped = new Map<string, CardTeam[]>(divs.map((d) => [d.name, []]));
   for (const t of allTeams) {
-    if (!grouped.has(t.division)) grouped.set(t.division, []);
-    grouped.get(t.division)!.push(t);
+    const divName = divNameById.get(t.divisionId) ?? "Unassigned";
+    if (!grouped.has(divName)) grouped.set(divName, []);
+    grouped.get(divName)!.push({ ...t, division: divName });
   }
 
   return (

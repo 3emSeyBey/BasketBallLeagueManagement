@@ -1,0 +1,118 @@
+erDiagram
+  users {
+    INTEGER id PK
+    TEXT email UK
+    TEXT username UK
+    TEXT name
+    TEXT contact_number
+    TEXT password_hash
+    TEXT role
+    INTEGER team_id FK
+    TEXT created_at
+  }
+  teams {
+    INTEGER id PK
+    TEXT name UK
+    TEXT division
+    TEXT image_mime_type
+    BLOB image_data
+    TEXT created_at
+  }
+  team_divisions {
+    INTEGER id PK
+    TEXT name UK
+    TEXT created_at
+  }
+  players {
+    INTEGER id PK
+    INTEGER team_id FK
+    TEXT name
+    INTEGER jersey_number
+    TEXT position
+    TEXT height
+    TEXT contact_number
+    TEXT image_mime_type
+    BLOB image_data
+    TEXT created_at
+  }
+  seasons {
+    INTEGER id PK
+    TEXT name UK
+    TEXT started_at
+    TEXT ended_at
+    TEXT status
+    TEXT bracket_type
+    BOOLEAN third_place_match
+  }
+  divisions {
+    INTEGER id PK
+    INTEGER season_id FK
+    TEXT name
+    TEXT created_at
+  }
+  season_teams {
+    INTEGER id PK
+    INTEGER season_id FK
+    INTEGER team_id FK
+    INTEGER division_id FK
+    INTEGER seed
+  }
+  matches {
+    INTEGER id PK
+    INTEGER season_id FK
+    INTEGER division_id FK
+    INTEGER home_team_id FK
+    INTEGER away_team_id FK
+    TEXT scheduled_at
+    TEXT venue
+    TEXT status
+    INTEGER home_score
+    INTEGER away_score
+    TEXT agora_channel
+    INTEGER round
+    TEXT stage
+    BOOLEAN is_division_final
+    BOOLEAN is_season_final
+    INTEGER bracket_position
+    INTEGER next_match_id FK
+    TEXT next_match_slot
+  }
+  finals_eliminations {
+    INTEGER id PK
+    INTEGER season_id FK
+    INTEGER team_id FK
+    TEXT eliminated_at
+  }
+  announcements {
+    INTEGER id PK
+    TEXT title
+    TEXT body
+    INTEGER created_by FK
+    TEXT created_at
+    TEXT updated_at
+  }
+  announcement_images {
+    INTEGER id PK
+    INTEGER announcement_id FK
+    TEXT mime_type
+    BLOB data
+    INTEGER created_by FK
+    TEXT created_at
+  }
+
+  teams ||--o{ users : "has manager"
+  teams ||--o{ players : "has"
+  seasons ||--o{ divisions : "has"
+  seasons ||--o{ season_teams : "registers"
+  teams ||--o{ season_teams : "in"
+  divisions ||--o{ season_teams : "groups"
+  seasons ||--o{ matches : "schedules"
+  divisions ||--o{ matches : "scopes"
+  teams ||--o{ matches : "home"
+  teams ||--o{ matches : "away"
+  matches ||--o{ matches : "advances to"
+  seasons ||--o{ finals_eliminations : "tracks"
+  teams ||--o{ finals_eliminations : "eliminated"
+  users ||--o{ announcements : "authors"
+  announcements ||--o{ announcement_images : "has"
+  users ||--o{ announcement_images : "uploads"

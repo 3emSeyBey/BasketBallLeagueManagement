@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, users, teamDivisions } from "@/db/schema";
+import { teams, users, divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { autoPlaceTeam } from "@/lib/bracket-service";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
-  division: z.string().trim().min(1).max(60),
+  divisionId: z.number().int().positive(),
   managerId: z.number().int().positive(),
 });
 
@@ -26,11 +27,9 @@ export async function POST(req: Request) {
   const parsed = Create.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const { managerId, ...teamFields } = parsed.data;
+  const { managerId, name, divisionId } = parsed.data;
 
-  const div = await db.query.teamDivisions.findFirst({
-    where: eq(teamDivisions.name, teamFields.division),
-  });
+  const div = await db.query.divisions.findFirst({ where: eq(divisions.id, divisionId) });
   if (!div) return NextResponse.json({ error: "Unknown division" }, { status: 400 });
 
   const manager = await db.query.users.findFirst({ where: eq(users.id, managerId) });
@@ -38,8 +37,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Manager must be an unassigned team manager" }, { status: 400 });
   }
 
-  const [row] = await db.insert(teams).values(teamFields).returning();
+  const [row] = await db.insert(teams).values({ name, divisionId }).returning();
   await db.update(users).set({ teamId: row.id }).where(eq(users.id, managerId));
+
+  // New team joins the division's default bracket (round 1) automatically.
+  await autoPlaceTeam(db, divisionId, row.id);
 
   return NextResponse.json(row, { status: 201 });
 }

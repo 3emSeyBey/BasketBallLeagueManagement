@@ -35,7 +35,6 @@ export default async function AdminSeasonsPage() {
               <tr>
                 <th className="p-3">Name</th>
                 <th className="p-3">Status</th>
-                <th className="p-3">Bracket</th>
                 <th className="p-3">Started</th>
                 <th className="p-3 text-right">Actions</th>
               </tr>
@@ -45,7 +44,6 @@ export default async function AdminSeasonsPage() {
                 <tr key={season.id} className="border-b">
                   <td className="p-3 font-medium">{season.name}</td>
                   <td className="p-3"><Badge variant="outline">{season.status}</Badge></td>
-                  <td className="p-3 text-sm text-muted-foreground">{season.bracketType}</td>
                   <td className="p-3 text-sm">{new Date(season.startedAt).toLocaleDateString()}</td>
                   <td className="p-3 text-right">
                     <Link href={`/admin/seasons/${season.id}`} className="text-sm text-primary hover:underline">
@@ -55,7 +53,7 @@ export default async function AdminSeasonsPage() {
                 </tr>
               ))}
               {allSeasons.length === 0 && (
-                <tr><td colSpan={5} className="p-4 text-sm text-muted-foreground text-center">No seasons yet.</td></tr>
+                <tr><td colSpan={4} className="p-4 text-sm text-muted-foreground text-center">No seasons yet.</td></tr>
               )}
             </tbody>
           </table>

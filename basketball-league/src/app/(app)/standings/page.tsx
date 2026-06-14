@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
 import { ChevronRight, Trophy } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, matches, teamDivisions } from "@/db/schema";
+import { teams, matches, divisions } from "@/db/schema";
 import { computeStandings } from "@/lib/standings";
 import { StandingsTable } from "@/components/standings/StandingsTable";
 import { Card } from "@/components/ui/card";
@@ -11,16 +10,22 @@ import { getSession } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function StandingsPage() {
-  const [session, allTeams, allMatches, divisions] = await Promise.all([
+  const [session, allTeams, allMatches, allDivisions] = await Promise.all([
     getSession(),
     db.select().from(teams),
     db.select().from(matches),
-    db.select().from(teamDivisions).orderBy(teamDivisions.name),
+    db.select().from(divisions).orderBy(divisions.name),
   ]);
-  const rows = computeStandings(allTeams, allMatches);
+  const divisionName = new Map(allDivisions.map((d) => [d.id, d.name]));
+  const teamsWithDivision = allTeams.map((t) => ({
+    id: t.id,
+    name: t.name,
+    division: divisionName.get(t.divisionId) ?? "",
+  }));
+  const rows = computeStandings(teamsWithDivision, allMatches);
   const myTeamId = session?.role === "team_manager" ? session.teamId : null;
 
-  const divisionNames = divisions.map((d) => d.name);
+  const divisionNames = Array.from(new Set(allDivisions.map((d) => d.name)));
   const known = new Set(divisionNames);
   const orphaned = Array.from(
     new Set(rows.map((r) => r.division).filter((d) => !known.has(d))),

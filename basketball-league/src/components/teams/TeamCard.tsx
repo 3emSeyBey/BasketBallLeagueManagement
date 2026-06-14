@@ -2,14 +2,21 @@ import Link from "next/link";
 import { Volleyball } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Team } from "@/db/schema";
+
+type TeamCardTeam = {
+  id: number;
+  name: string;
+  division: string;
+  imageMimeType: string | null;
+  createdAt: string;
+};
 
 export function TeamCard({
   team,
   linkPrefix = "/teams",
   showDivision = true,
 }: {
-  team: Pick<Team, "id" | "name" | "division" | "imageMimeType" | "createdAt">;
+  team: TeamCardTeam;
   linkPrefix?: string;
   showDivision?: boolean;
 }) {
