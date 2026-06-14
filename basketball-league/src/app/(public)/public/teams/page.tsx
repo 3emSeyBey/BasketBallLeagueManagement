@@ -1,8 +1,7 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
 import { teams, divisions } from "@/db/schema";
-import { Card } from "@/components/ui/card";
-import { TeamCard } from "@/components/teams/TeamCard";
+import { TeamsByDivision, type DivisionGroup } from "@/components/teams/TeamsByDivision";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +13,22 @@ export default async function PublicTeams() {
 
   const divNameById = new Map(divs.map((d) => [d.id, d.name]));
 
-  type CardTeam = (typeof allTeams)[number] & { division: string };
-
-  const grouped = new Map<string, CardTeam[]>(divs.map((d) => [d.name, []]));
+  const groupByName = new Map<string, DivisionGroup>();
+  for (const d of divs) {
+    if (!groupByName.has(d.name)) groupByName.set(d.name, { divId: d.id, divName: d.name, teams: [] });
+  }
   for (const t of allTeams) {
     const divName = divNameById.get(t.divisionId) ?? "Unassigned";
-    if (!grouped.has(divName)) grouped.set(divName, []);
-    grouped.get(divName)!.push({ ...t, division: divName });
+    if (!groupByName.has(divName)) groupByName.set(divName, { divId: null, divName, teams: [] });
+    groupByName.get(divName)!.teams.push({
+      id: t.id,
+      name: t.name,
+      division: divName,
+      imageMimeType: t.imageMimeType,
+      createdAt: t.createdAt,
+    });
   }
+  const groups = Array.from(groupByName.values());
 
   return (
     <div className="space-y-6">
@@ -33,41 +40,7 @@ export default async function PublicTeams() {
         </p>
       </div>
 
-      {grouped.size === 0 ? (
-        <Card className="p-10 text-center text-muted-foreground">
-          <p>No divisions yet.</p>
-        </Card>
-      ) : (
-        <div className="space-y-6">
-          {Array.from(grouped.entries()).map(([divName, list]) => (
-            <Card key={divName} className="p-5 sm:p-6 space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="size-2 rounded-full bg-primary shadow-[0_0_12px_rgba(243,112,33,0.7)]" />
-                <h2 className="text-xl font-semibold tracking-tight">{divName}</h2>
-                <span className="text-xs text-muted-foreground">
-                  {list.length} team{list.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              {list.length === 0 ? (
-                <p className="text-sm text-muted-foreground border border-dashed border-white/10 rounded-md p-4 text-center">
-                  No teams in this division yet.
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {list.map((t) => (
-                    <TeamCard
-                      key={t.id}
-                      team={t}
-                      linkPrefix="/public/teams"
-                      showDivision={false}
-                    />
-                  ))}
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
+      <TeamsByDivision groups={groups} isAdmin={false} linkPrefix="/public/teams" />
     </div>
   );
 }

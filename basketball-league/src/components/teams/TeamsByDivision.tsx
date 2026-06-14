@@ -20,9 +20,11 @@ export type DivisionGroup = {
 export function TeamsByDivision({
   groups,
   isAdmin,
+  linkPrefix = "/teams",
 }: {
   groups: DivisionGroup[];
   isAdmin: boolean;
+  linkPrefix?: string;
 }) {
   const [selected, setSelected] = useState<string>(groups[0]?.divName ?? "");
 
@@ -100,7 +102,7 @@ export function TeamsByDivision({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {group.teams.map((t) => (
-              <TeamCard key={t.id} team={t} showDivision={false} />
+              <TeamCard key={t.id} team={t} linkPrefix={linkPrefix} showDivision={false} />
             ))}
           </div>
         )}

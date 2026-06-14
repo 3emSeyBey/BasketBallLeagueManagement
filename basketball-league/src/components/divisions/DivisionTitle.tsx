@@ -41,7 +41,7 @@ export function DivisionTitle({
     }
     setBusy(true);
     setErr(null);
-    const res = await fetch(`/api/team-divisions/${id}`, {
+    const res = await fetch(`/api/divisions/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: trimmed }),
