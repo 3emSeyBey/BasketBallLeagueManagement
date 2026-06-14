@@ -82,6 +82,7 @@ export default async function SchedulePage({
         divisionId={divisionId}
         selectedBracket={view.selectedBracket}
         divisions={view.divisions}
+        season={activeSeason?.name ?? null}
       />
 
       <Card className="p-0 overflow-hidden">

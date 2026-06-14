@@ -60,6 +60,7 @@ export default async function PublicSchedule({
         divisionId={divisionId}
         selectedBracket={view.selectedBracket}
         divisions={view.divisions}
+        season={activeSeason?.name ?? null}
       />
 
       <Card className="p-0 overflow-hidden">

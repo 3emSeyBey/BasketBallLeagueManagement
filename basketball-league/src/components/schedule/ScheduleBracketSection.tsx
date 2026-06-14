@@ -1,20 +1,24 @@
 import { Card } from "@/components/ui/card";
 import { BracketGrid, type BracketBox } from "@/components/brackets/BracketGrid";
+import { ExportBracketButton } from "@/components/brackets/ExportBracketButton";
 import { DivisionBracketModal } from "./DivisionBracketModal";
 
 // Bracket area above the schedule table. A specific division shows its default
-// bracket inline; "All" shows a button that opens a per-division bracket modal.
+// bracket inline (with PNG export); "All" shows a button that opens a
+// per-division bracket modal.
 export function ScheduleBracketSection({
   divisionId,
   selectedBracket,
   divisions,
+  season,
 }: {
   divisionId: number | null;
   selectedBracket: { title: string; rounds: BracketBox[][] } | null;
   divisions: { id: number; name: string; bracketId: number | null }[];
+  season: string | null;
 }) {
   if (divisionId == null) {
-    return <DivisionBracketModal divisions={divisions} />;
+    return <DivisionBracketModal divisions={divisions} season={season} />;
   }
   if (!selectedBracket) {
     return (
@@ -23,9 +27,18 @@ export function ScheduleBracketSection({
       </div>
     );
   }
+  const divisionName = divisions.find((d) => d.id === divisionId)?.name ?? null;
   return (
     <Card className="space-y-3 p-4">
-      <h2 className="font-semibold">{selectedBracket.title}</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-semibold">{selectedBracket.title}</h2>
+        <ExportBracketButton
+          title={selectedBracket.title}
+          season={season}
+          division={divisionName}
+          rounds={selectedBracket.rounds}
+        />
+      </div>
       <div className="rounded-lg border bg-muted/20 p-4">
         <BracketGrid rounds={selectedBracket.rounds} />
       </div>
