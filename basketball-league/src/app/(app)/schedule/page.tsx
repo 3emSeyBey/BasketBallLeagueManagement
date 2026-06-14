@@ -66,7 +66,7 @@ export default async function SchedulePage({
               + Create Match
             </Link>
             <Link href="/admin/brackets" className={buttonVariants({ variant: "outline" })}>
-              Brackets
+              Manage Brackets
             </Link>
           </div>
         )}
