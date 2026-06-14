@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { toPng } from "html-to-image";
+import { toBlob } from "html-to-image";
 import { Download, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BracketGrid, type BracketBox } from "./BracketGrid";
@@ -26,15 +26,21 @@ export function ExportBracketButton({
     if (!frameRef.current) return;
     setBusy(true);
     try {
-      const dataUrl = await toPng(frameRef.current, {
+      const blob = await toBlob(frameRef.current, {
         pixelRatio: 2,
         cacheBust: true,
         backgroundColor: "#0b1120",
       });
+      if (!blob) return;
+      const slug = title.replace(/[^\w]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "bracket";
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.download = `${title.replace(/[^\w]+/g, "-").toLowerCase()}-bracket.png`;
-      a.href = dataUrl;
+      a.href = url;
+      a.download = `${slug}-bracket.png`;
+      document.body.appendChild(a);
       a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     } finally {
       setBusy(false);
     }
