@@ -9,7 +9,23 @@ import { PlayerList } from "@/components/players/PlayerList";
 
 export default async function PlayersPage() {
   const session = await getSession();
-  if (session?.role !== "team_manager" || !session.teamId) redirect("/dashboard");
+  if (session?.role !== "team_manager") redirect("/dashboard");
+
+  // Unapproved manager: no team yet — show a pending-approval notice.
+  if (session.status === "pending" || !session.teamId) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-semibold">Players</h1>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-700 dark:text-amber-400">
+          <p className="font-medium">Your account is pending for approval.</p>
+          <p className="text-amber-700/80 dark:text-amber-400/80">
+            Contact an admin to approve your account. Once approved, your team is set up and you can manage your roster here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const team = await db.query.teams.findFirst({ where: eq(teams.id, session.teamId) });
   if (!team) redirect("/dashboard");
   const roster = await db.select({
