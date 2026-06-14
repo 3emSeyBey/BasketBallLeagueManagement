@@ -15,6 +15,8 @@ export type BracketBox = {
   awayTeamId: number | null;
   homeTeamName: string | null;
   awayTeamName: string | null;
+  homeTeamLogo: boolean;
+  awayTeamLogo: boolean;
   status: string;
   homeScore: number;
   awayScore: number;
@@ -296,9 +298,10 @@ export async function loadBracketTree(db: Database, bracketId: number): Promise<
     .where(eq(bracketMatches.bracketId, bracketId))
     .orderBy(asc(bracketMatches.roundIndex), asc(bracketMatches.slotIndex));
 
-  const teamRows = await db.select({ id: teams.id, name: teams.name })
+  const teamRows = await db.select({ id: teams.id, name: teams.name, imageMimeType: teams.imageMimeType })
     .from(teams).where(eq(teams.divisionId, bracket.divisionId));
   const teamName = new Map(teamRows.map((t) => [t.id, t.name]));
+  const teamLogo = new Set(teamRows.filter((t) => t.imageMimeType != null).map((t) => t.id));
 
   const rounds: BracketBox[][] = [];
   for (const r of rows) {
@@ -306,6 +309,8 @@ export async function loadBracketTree(db: Database, bracketId: number): Promise<
       ...r,
       homeTeamName: r.homeTeamId != null ? teamName.get(r.homeTeamId) ?? null : null,
       awayTeamName: r.awayTeamId != null ? teamName.get(r.awayTeamId) ?? null : null,
+      homeTeamLogo: r.homeTeamId != null && teamLogo.has(r.homeTeamId),
+      awayTeamLogo: r.awayTeamId != null && teamLogo.has(r.awayTeamId),
     });
   }
   // Collapse any holes so callers get a dense array.
