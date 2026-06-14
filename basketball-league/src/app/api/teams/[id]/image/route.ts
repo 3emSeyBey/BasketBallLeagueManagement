@@ -5,6 +5,7 @@ import { teams } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { dominantHex } from "@/lib/image-color";
+import { toBytes } from "@/lib/blob";
 
 const ALLOWED_MIME = new Set([
   "image/png",
@@ -31,12 +32,12 @@ export async function GET(
     .then((r) => r[0]);
   if (!row || !row.imageData || !row.imageMimeType)
     return new Response("Not found", { status: 404 });
-  const data = row.imageData as Buffer;
-  return new Response(new Uint8Array(data), {
+  const bytes = toBytes(row.imageData);
+  return new Response(bytes, {
     status: 200,
     headers: {
       "Content-Type": row.imageMimeType,
-      "Content-Length": String(data.length),
+      "Content-Length": String(bytes.byteLength),
       "Cache-Control": "public, max-age=300",
     },
   });

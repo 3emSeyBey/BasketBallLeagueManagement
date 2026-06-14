@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { players } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { canManageTeam } from "@/lib/rbac";
+import { toBytes } from "@/lib/blob";
 
 const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -17,12 +18,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     imageData: players.imageData,
   }).from(players).where(eq(players.id, idNum)).then(r => r[0]);
   if (!row || !row.imageData || !row.imageMimeType) return new Response("Not found", { status: 404 });
-  const data = row.imageData as Buffer;
-  return new Response(new Uint8Array(data), {
+  const bytes = toBytes(row.imageData);
+  return new Response(bytes, {
     status: 200,
     headers: {
       "Content-Type": row.imageMimeType,
-      "Content-Length": String(data.length),
+      "Content-Length": String(bytes.byteLength),
       "Cache-Control": "public, max-age=300",
     },
   });
