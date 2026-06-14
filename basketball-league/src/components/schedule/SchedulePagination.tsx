@@ -8,12 +8,20 @@ export function SchedulePagination({
   page,
   totalPages,
   basePath,
+  query,
 }: {
   page: number;
   totalPages: number;
   basePath: string;
+  query?: Record<string, string>;
 }) {
   if (totalPages <= 1) return null;
+
+  const href = (p: number) => {
+    const sp = new URLSearchParams(query);
+    sp.set("page", String(p));
+    return `${basePath}?${sp.toString()}`;
+  };
 
   const prevDisabled = page <= 1;
   const nextDisabled = page >= totalPages;
@@ -23,7 +31,7 @@ export function SchedulePagination({
   return (
     <div className="flex items-center justify-between gap-3">
       <Link
-        href={`${basePath}?page=${page - 1}`}
+        href={href(page - 1)}
         aria-disabled={prevDisabled}
         tabIndex={prevDisabled ? -1 : undefined}
         className={cn(ghost, prevDisabled && disabled)}
@@ -34,7 +42,7 @@ export function SchedulePagination({
         Page {page} of {totalPages}
       </span>
       <Link
-        href={`${basePath}?page=${page + 1}`}
+        href={href(page + 1)}
         aria-disabled={nextDisabled}
         tabIndex={nextDisabled ? -1 : undefined}
         className={cn(ghost, nextDisabled && disabled)}
