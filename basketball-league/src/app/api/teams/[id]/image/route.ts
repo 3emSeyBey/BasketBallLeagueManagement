@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { teams } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { dominantHex } from "@/lib/image-color";
 
 const ALLOWED_MIME = new Set([
   "image/png",
@@ -80,9 +81,10 @@ export async function POST(
     return NextResponse.json({ error: "Too large" }, { status: 413 });
 
   const buf = Buffer.from(await file.arrayBuffer());
+  const logoColor = await dominantHex(buf);
   await db
     .update(teams)
-    .set({ imageMimeType: file.type, imageData: buf })
+    .set({ imageMimeType: file.type, imageData: buf, logoColor })
     .where(eq(teams.id, idNum));
   return NextResponse.json({ ok: true });
 }
@@ -105,7 +107,7 @@ export async function DELETE(
 
   await db
     .update(teams)
-    .set({ imageMimeType: null, imageData: null })
+    .set({ imageMimeType: null, imageData: null, logoColor: null })
     .where(eq(teams.id, idNum));
   return NextResponse.json({ ok: true });
 }

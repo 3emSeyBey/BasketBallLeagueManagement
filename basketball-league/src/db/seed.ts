@@ -11,8 +11,22 @@ import {
   bracketMatches,
 } from "./schema";
 import bcrypt from "bcryptjs";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { eq } from "drizzle-orm";
 import { createBracket, autoPlaceTeam, advanceWinner, loadBracketTree } from "@/lib/bracket-service";
+import { dominantHex } from "@/lib/image-color";
+
+// Demo logo so the bracket's logo + color-tint feature is visible after seeding.
+async function setTeamLogo(teamName: string, assetFile: string, mime: string) {
+  try {
+    const buf = await readFile(path.join(process.cwd(), "src/db/assets", assetFile));
+    const logoColor = await dominantHex(buf);
+    await db.update(teams).set({ imageMimeType: mime, imageData: buf, logoColor }).where(eq(teams.name, teamName));
+  } catch (e) {
+    console.warn(`logo seed skipped for ${teamName}:`, (e as Error).message);
+  }
+}
 
 type Position = "PG" | "SG" | "SF" | "PF" | "C";
 type RosterEntry = { name: string; position: Position; height: string };
@@ -284,6 +298,8 @@ async function main() {
       play: "all", startDaysAgo: 310, adminId: admin.id,
     });
   }
+
+  await setTeamLogo("Bantayan Sharks", "bantayan-sharks.png", "image/png");
 
   console.log("Seed complete.");
 }

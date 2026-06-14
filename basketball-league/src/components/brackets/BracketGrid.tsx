@@ -13,16 +13,30 @@ export type BracketBox = {
   awayTeamName: string | null;
   homeTeamLogo?: boolean;
   awayTeamLogo?: boolean;
+  homeTeamColor?: string | null;
+  awayTeamColor?: string | null;
   status: string;
   homeScore: number;
   awayScore: number;
   feedsIntoId: number | null;
 };
 
-const BOX_W = 208;
-const BOX_H = 60;
-const UNIT = 80; // vertical slot for a round-1 box (incl. gap)
+const BOX_W = 230;
+const BOX_H = 86;
+const UNIT = 108; // vertical slot for a round-1 box (incl. gap)
 const CONNECTOR_W = 44;
+
+// Readable foreground for a given background color (WCAG relative luminance).
+function textOn(hex: string): string {
+  const m = hex.replace("#", "");
+  if (m.length < 6) return "#ffffff";
+  const ch = (i: number) => {
+    const c = parseInt(m.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const lum = 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4);
+  return lum < 0.5 ? "#ffffff" : "#0b1120";
+}
 
 function roundLabel(roundIndex: number, totalRounds: number): string {
   const fromEnd = totalRounds - 1 - roundIndex;
@@ -39,13 +53,13 @@ function TeamLogo({ teamId, hasLogo }: { teamId: number; hasLogo: boolean }) {
       <img
         src={`/api/teams/${teamId}/image`}
         alt=""
-        className="size-7 shrink-0 rounded-md object-cover ring-1 ring-border"
+        className="size-9 shrink-0 rounded-lg object-cover ring-1 ring-black/20"
       />
     );
   }
   return (
-    <span className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground ring-1 ring-border">
-      <Volleyball className="size-4" />
+    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-black/15 ring-1 ring-black/20">
+      <Volleyball className="size-5 opacity-70" />
     </span>
   );
 }
@@ -64,6 +78,7 @@ function Slot({
   const teamId = slot === "home" ? box.homeTeamId : box.awayTeamId;
   const name = slot === "home" ? box.homeTeamName : box.awayTeamName;
   const hasLogo = slot === "home" ? !!box.homeTeamLogo : !!box.awayTeamLogo;
+  const color = (slot === "home" ? box.homeTeamColor : box.awayTeamColor) ?? null;
   const score = slot === "home" ? box.homeScore : box.awayScore;
   const ended = box.status === "ended";
   const other = slot === "home" ? box.awayScore : box.homeScore;
@@ -75,7 +90,7 @@ function Slot({
         type="button"
         disabled={!editable}
         onClick={editable ? () => onSlotClick?.(box, slot) : undefined}
-        className={`flex h-1/2 w-full items-center gap-1.5 px-3 text-left text-[13px] ${
+        className={`flex h-1/2 w-full items-center gap-2 px-3 text-left text-[13px] ${
           editable
             ? "cursor-pointer text-primary hover:bg-primary/10"
             : "cursor-default text-muted-foreground/60"
@@ -87,25 +102,34 @@ function Slot({
     );
   }
 
+  const fg = color ? textOn(color) : undefined;
+  const styled = !!color;
+
   return (
     <button
       type="button"
       disabled={!editable}
       onClick={editable ? () => onSlotClick?.(box, slot) : undefined}
-      className={`relative flex h-1/2 w-full items-center gap-2 px-3 text-left text-[13px] ${
-        editable ? "cursor-pointer hover:bg-accent/40" : "cursor-default"
+      style={styled ? { backgroundColor: color!, color: fg } : undefined}
+      className={`flex h-1/2 w-full items-center gap-2.5 px-3 text-left text-[13px] ${
+        editable ? "cursor-pointer hover:brightness-110" : "cursor-default"
       } ${slot === "home" ? "border-b border-border/60" : ""} ${
-        isWinner ? "bg-primary/5 font-semibold text-foreground" : "text-foreground/85"
-      }`}
+        !styled && isWinner ? "bg-primary/5" : ""
+      } ${isWinner ? "font-semibold" : styled ? "" : "text-foreground/85"}`}
     >
-      {isWinner ? <span className="absolute inset-y-0 left-0 w-0.5 bg-primary" /> : null}
+      <TeamLogo teamId={teamId} hasLogo={hasLogo} />
       <span className="flex-1 truncate">{name ?? `Team ${teamId}`}</span>
       {ended ? (
-        <span className={`tabular-nums text-sm ${isWinner ? "text-primary" : "text-muted-foreground"}`}>
+        <span
+          className="tabular-nums text-sm font-semibold"
+          style={fg ? { color: fg } : undefined}
+        >
           {score}
         </span>
       ) : null}
-      <TeamLogo teamId={teamId} hasLogo={hasLogo} />
+      {isWinner ? (
+        <Trophy className="size-4 shrink-0" style={{ color: fg ?? "var(--color-primary, #f37021)" }} />
+      ) : null}
     </button>
   );
 }

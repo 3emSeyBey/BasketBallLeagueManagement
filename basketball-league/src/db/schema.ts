@@ -37,6 +37,7 @@ export const teams = sqliteTable("teams", {
   divisionId: integer("division_id").notNull().references(() => divisions.id, { onDelete: "cascade" }),
   imageMimeType: text("image_mime_type"),
   imageData: blob("image_data", { mode: "buffer" }),
+  logoColor: text("logo_color"),
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
