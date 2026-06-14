@@ -119,6 +119,34 @@ export function StreamPlayer({ matchId }: { matchId: number }) {
           return;
         }
         clientRef.current = client;
+
+        // Subscribe to anyone already broadcasting when we joined — the
+        // user-published event only covers people who publish after us.
+        for (const user of client.remoteUsers) {
+          if (cancelled) break;
+          for (const mediaType of ["video", "audio"] as const) {
+            if (!user.hasVideo && mediaType === "video") continue;
+            if (!user.hasAudio && mediaType === "audio") continue;
+            try {
+              await client.subscribe(user, mediaType);
+              if (cancelled) break;
+              if (mediaType === "video" && user.videoTrack) {
+                remoteUidRef.current = user.uid;
+                remoteVideoRef.current = user.videoTrack;
+                user.videoTrack.play(containerRef.current!, { fit: "contain" });
+                setStatus("live");
+              }
+              if (mediaType === "audio" && user.audioTrack) {
+                remoteAudioRef.current = user.audioTrack;
+                user.audioTrack.play();
+                user.audioTrack.setVolume(muted ? 0 : volume);
+              }
+            } catch {
+              // ignore
+            }
+          }
+        }
+
         if (client.remoteUsers.length === 0) setStatus("offline");
       } catch {
         if (!cancelled) setStatus("offline");
