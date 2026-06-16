@@ -41,7 +41,7 @@ export function ActivateSeasonButton({ seasonId }: { seasonId: number }) {
       toast.error(typeof json.error === "string" ? json.error : "Activation failed");
       return;
     }
-    toast.success("Season activated");
+    toast.success("League activated");
     setOpen(false);
     router.refresh();
   }
@@ -49,12 +49,12 @@ export function ActivateSeasonButton({ seasonId }: { seasonId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button className="bg-primary text-primary-foreground hover:bg-primary/90" />}>
-        Activate season
+        Activate league
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Activate season</DialogTitle>
-          <DialogDescription>Activating ends the current active season.</DialogDescription>
+          <DialogTitle>Activate league</DialogTitle>
+          <DialogDescription>Activating ends the current active league.</DialogDescription>
         </DialogHeader>
         <form onSubmit={activate} className="space-y-4">
           <div className="space-y-2">

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { TeamForm } from "@/components/teams/TeamForm";
 import { DeleteTeamButton } from "@/components/teams/DeleteTeamButton";
 import { ChangeManagerDialog } from "@/components/teams/ChangeManagerDialog";
+import { UnassignManagerButton } from "@/components/teams/UnassignManagerButton";
 import { getSession } from "@/lib/session";
 
 export default async function TeamDetail({ params }: { params: Promise<{ id: string }> }) {
@@ -65,7 +66,12 @@ export default async function TeamDetail({ params }: { params: Promise<{ id: str
       <Card className="p-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-semibold">Manager</h2>
-          {session.role === "admin" && <ChangeManagerDialog teamId={team.id} />}
+          {session.role === "admin" && (
+            <div className="flex items-center gap-3">
+              <ChangeManagerDialog teamId={team.id} />
+              {managers.length > 0 && <UnassignManagerButton teamId={team.id} />}
+            </div>
+          )}
         </div>
         {managers.length === 0
           ? <p className="text-sm text-muted-foreground">No manager assigned.</p>

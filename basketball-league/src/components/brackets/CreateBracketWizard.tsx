@@ -85,7 +85,7 @@ export function CreateBracketWizard({
           <div className="space-y-4">
             {divisions.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No divisions exist yet. Create a season and a division first.
+                No divisions exist yet. Create a league and a division first.
               </p>
             ) : (
               <Select value={divisionId} onValueChange={(v) => setDivisionId(v ?? "")}>

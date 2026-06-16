@@ -53,7 +53,7 @@ export function StartSeasonButton() {
       return;
     }
     const data = await res.json();
-    toast.success("Season created");
+    toast.success("League created");
     setOpen(false);
     router.push(`/admin/seasons/${data.id}`);
   }
@@ -64,20 +64,20 @@ export function StartSeasonButton() {
         render={
           <Button className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <Plus className="size-4" />
-            Start a new season
+            Start a new league
           </Button>
         }
       />
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Start a new season</DialogTitle>
+          <DialogTitle>Start a new league</DialogTitle>
           <DialogDescription>
-            Creates a draft season. Add divisions and teams afterwards.
+            Creates a draft league. Add divisions and teams afterwards.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-2">
-            <Label>Season name</Label>
+            <Label>League name</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}

@@ -44,7 +44,7 @@ export function AddDivisionDialog() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!seasonId) { setErr("Pick a season"); return; }
+    if (!seasonId) { setErr("Pick a league"); return; }
     setBusy(true);
     setErr(null);
     const res = await fetch(`/api/seasons/${seasonId}/divisions`, {
@@ -79,15 +79,15 @@ export function AddDivisionDialog() {
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Season</Label>
+            <Label>League</Label>
             {seasons.length === 0 ? (
               <p className="text-sm text-muted-foreground rounded-md border border-dashed p-3">
-                No seasons yet. Create a season first.
+                No leagues yet. Create a league first.
               </p>
             ) : (
               <Select value={seasonId} onValueChange={(v) => setSeasonId(v ?? "")}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pick a season" />
+                  <SelectValue placeholder="Pick a league" />
                 </SelectTrigger>
                 <SelectContent>
                   {seasons.map((s) => (

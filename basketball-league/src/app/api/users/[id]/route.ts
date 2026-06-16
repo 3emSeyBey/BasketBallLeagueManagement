@@ -61,8 +61,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const target = await db.query.users.findFirst({ where: eq(users.id, idNum) });
   if (!target) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (target.role === "admin") return NextResponse.json({ error: "Admins cannot be deleted" }, { status: 400 });
-  if (target.teamId !== null) return NextResponse.json({ error: "Manager is assigned to a team. Switch the team's manager first." }, { status: 400 });
 
+  // A manager assigned to a team can still be deleted; the team is simply left
+  // orphaned (no manager). The team row itself is untouched.
   await db.delete(users).where(eq(users.id, idNum));
   return NextResponse.json({ ok: true });
 }

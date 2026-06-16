@@ -10,7 +10,7 @@ export function StartSeasonButton({ seasonId }: { seasonId: number }) {
   const [busy, setBusy] = useState(false);
 
   async function start() {
-    if (!confirm("Start this season? The bracket will be locked.")) return;
+    if (!confirm("Start this league? The bracket will be locked.")) return;
     setBusy(true);
     const res = await fetch(`/api/seasons/${seasonId}/start`, { method: "POST" });
     setBusy(false);
@@ -19,13 +19,13 @@ export function StartSeasonButton({ seasonId }: { seasonId: number }) {
       toast.error(typeof j.error === "string" ? j.error : "Start failed");
       return;
     }
-    toast.success("Season started");
+    toast.success("League started");
     router.refresh();
   }
 
   return (
     <Button onClick={start} disabled={busy} className="bg-primary text-primary-foreground hover:bg-primary/90">
-      {busy ? "Starting…" : "Start season"}
+      {busy ? "Starting…" : "Start league"}
     </Button>
   );
 }

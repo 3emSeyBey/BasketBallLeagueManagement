@@ -93,7 +93,7 @@ export default async function ArchivedSeasonPage({ params }: { params: Promise<{
 
       <div>
         <h1 className="text-3xl font-semibold">{season.name}</h1>
-        <p className="text-sm text-muted-foreground">Season {started}–{ended}</p>
+        <p className="text-sm text-muted-foreground">League {started}–{ended}</p>
       </div>
 
       {/* Divisions + teams + rosters */}

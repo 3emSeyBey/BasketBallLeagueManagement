@@ -54,26 +54,26 @@ export default async function Dashboard() {
     hint?: string;
   }[] = session.role === "admin"
     ? [
-        { label: "Teams", value: activeTeamCount, href: "/teams", subtitle: activeSeason ? "this season" : "no active season" },
-        { label: "Players", value: activePlayerCount, href: "/teams", subtitle: activeSeason ? "this season" : "no active season" },
+        { label: "Teams", value: activeTeamCount, href: "/teams", subtitle: activeSeason ? "this league" : "no active league" },
+        { label: "Players", value: activePlayerCount, href: "/teams", subtitle: activeSeason ? "this league" : "no active league" },
         activeSeason
           ? {
-              label: "Active Season",
+              label: "Active League",
               value: activeSeason.name,
               href: "/admin/seasons",
               subtitle: `Started ${new Date(activeSeason.startedAt).toLocaleDateString()}`,
-              hint: "Manage current season · View archive",
+              hint: "Manage current league · View archive",
             }
           : {
-              label: "Active Season",
+              label: "Active League",
               value: "None",
               href: "/admin/seasons",
-              subtitle: "No active season",
+              subtitle: "No active league",
             },
       ]
     : [
         { label: "My Roster", value: myRoster.length, href: "/players" },
-        { label: "Active Season", value: seasonValue, href: seasonHref },
+        { label: "Active League", value: seasonValue, href: seasonHref },
       ];
 
   return (

@@ -58,7 +58,9 @@ export function MatchForm({
         <Label>Home Team</Label>
         <Select value={home} onValueChange={(v) => setHome(v ?? "")}>
           <SelectTrigger>
-            <SelectValue placeholder="Select team" />
+            <SelectValue placeholder="Select team">
+              {(v) => teams.find((t) => String(t.id) === v)?.name}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {teams.map((t) => (
@@ -73,7 +75,9 @@ export function MatchForm({
         <Label>Away Team</Label>
         <Select value={away} onValueChange={(v) => setAway(v ?? "")}>
           <SelectTrigger>
-            <SelectValue placeholder="Select team" />
+            <SelectValue placeholder="Select team">
+              {(v) => teams.find((t) => String(t.id) === v)?.name}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {teams

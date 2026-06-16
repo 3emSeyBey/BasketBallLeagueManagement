@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { desc } from "drizzle-orm";
 import { db } from "@/db/client";
 import { teams, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
@@ -9,9 +10,10 @@ export default async function NewMatchPage() {
   if (s?.role !== "admin") redirect("/schedule");
   const [allTeams, seasonRows] = await Promise.all([
     db.select().from(teams).orderBy(teams.name),
-    db.select().from(seasons).limit(1),
+    db.select().from(seasons).orderBy(desc(seasons.id)),
   ]);
-  const season = seasonRows[0];
+  // Match the schedule list's season choice: active season, else newest.
+  const season = seasonRows.find((s) => s.status === "active") ?? seasonRows[0];
   if (!season) redirect("/schedule");
   return (
     <div className="space-y-6">

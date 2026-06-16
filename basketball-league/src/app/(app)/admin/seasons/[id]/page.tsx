@@ -37,7 +37,7 @@ export default async function ManageSeasonPage({ params }: { params: Promise<{ i
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/admin/seasons" className="text-sm text-primary hover:underline">← Seasons</Link>
+        <Link href="/admin/seasons" className="text-sm text-primary hover:underline">← Leagues</Link>
         <div className="flex items-center gap-3">
           <Badge variant="outline">{season.status}</Badge>
           {isDraft && <ActivateSeasonButton seasonId={season.id} />}

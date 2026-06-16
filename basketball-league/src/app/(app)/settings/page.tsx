@@ -35,7 +35,7 @@ export default async function SettingsPage() {
         <h1 className="text-3xl font-semibold">Settings</h1>
         <p className="text-muted-foreground">
           {session.role === "admin"
-            ? "Account, season, and league administration"
+            ? "Account and league administration"
             : "Update your account details"}
         </p>
       </div>
@@ -62,11 +62,11 @@ export default async function SettingsPage() {
       {session.role === "admin" && (
         <Card className="p-6 space-y-4">
           <div>
-            <h2 className="font-semibold">Season management</h2>
+            <h2 className="font-semibold">League management</h2>
             <p className="text-sm text-muted-foreground">
               {activeSeason
-                ? `Active season: ${activeSeason.name}`
-                : "No active season."}
+                ? `Active league: ${activeSeason.name}`
+                : "No active league."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -78,7 +78,7 @@ export default async function SettingsPage() {
                   className: "gap-2",
                 })}
               >
-                Manage current season
+                Manage current league
                 <ArrowRight className="size-4" />
               </Link>
             ) : (
@@ -89,7 +89,7 @@ export default async function SettingsPage() {
                   className: "gap-2",
                 })}
               >
-                View all seasons
+                View all leagues
                 <ArrowRight className="size-4" />
               </Link>
             )}
@@ -97,7 +97,7 @@ export default async function SettingsPage() {
           </div>
           <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
             <Sparkles className="size-3" />
-            New seasons start in draft. Add divisions and teams next.
+            New leagues start in draft. Add divisions and teams next.
           </p>
         </Card>
       )}

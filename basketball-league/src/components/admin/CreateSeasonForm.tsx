@@ -41,11 +41,11 @@ export function CreateSeasonForm({ teams: _teams }: Props) {
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-2"><Label>Season name</Label><Input value={name} onChange={(e)=>setName(e.target.value)} required minLength={2} /></div>
+        <div className="space-y-2"><Label>League name</Label><Input value={name} onChange={(e)=>setName(e.target.value)} required minLength={2} /></div>
         <div className="space-y-2"><Label>Start date</Label><Input type="datetime-local" value={startedAt} onChange={(e)=>setStartedAt(e.target.value)} required /></div>
       </div>
       <Button type="submit" disabled={busy} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        {busy ? "Creating…" : "Create season"}
+        {busy ? "Creating…" : "Create league"}
       </Button>
     </form>
   );

@@ -26,7 +26,7 @@ export default async function PublicHome() {
     <div className="space-y-8">
       <div className="bg-primary/10 rounded-2xl p-10 text-center">
         <h1 className="text-4xl font-bold">Mayor&apos;s Cup Basketball League</h1>
-        <p className="text-muted-foreground mt-2">Bantayan, Cebu — Season 2026</p>
+        <p className="text-muted-foreground mt-2">Bantayan, Cebu — League 2026</p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

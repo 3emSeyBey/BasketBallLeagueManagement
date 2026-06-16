@@ -32,19 +32,6 @@ export function DeleteUserButton({ userId, userLabel, assignedToTeam }: Props) {
     router.refresh();
   }
 
-  if (assignedToTeam) {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        disabled
-        title="Switch the team's manager first"
-      >
-        Delete
-      </Button>
-    );
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="destructive" size="sm" />}>Delete</DialogTrigger>
@@ -53,6 +40,12 @@ export function DeleteUserButton({ userId, userLabel, assignedToTeam }: Props) {
           <DialogTitle>Delete {userLabel}?</DialogTitle>
           <DialogDescription>This permanently removes the user account.</DialogDescription>
         </DialogHeader>
+        {assignedToTeam && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+            This manager is assigned to a team. Deleting them will leave the team
+            orphaned (no manager). You can assign a new manager later.
+          </div>
+        )}
         <DialogFooter>
           <DialogClose render={<Button variant="outline" disabled={busy} />}>Cancel</DialogClose>
           <Button variant="destructive" onClick={onDelete} disabled={busy}>

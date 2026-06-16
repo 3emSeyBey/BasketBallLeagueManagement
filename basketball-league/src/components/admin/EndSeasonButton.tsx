@@ -10,7 +10,7 @@ export function EndSeasonButton({ seasonId }: { seasonId: number }) {
   const [busy, setBusy] = useState(false);
 
   async function end() {
-    if (!confirm("End this season? It moves to the read-only archive.")) return;
+    if (!confirm("End this league? It moves to the read-only archive.")) return;
     setBusy(true);
     const res = await fetch(`/api/seasons/${seasonId}/end`, { method: "POST" });
     const json = await res.json().catch(() => ({}));
@@ -19,13 +19,13 @@ export function EndSeasonButton({ seasonId }: { seasonId: number }) {
       toast.error(typeof json.error === "string" ? json.error : "End failed");
       return;
     }
-    toast.success("Season ended");
+    toast.success("League ended");
     router.refresh();
   }
 
   return (
     <Button onClick={end} disabled={busy} variant="destructive">
-      {busy ? "Ending…" : "End season"}
+      {busy ? "Ending…" : "End league"}
     </Button>
   );
 }

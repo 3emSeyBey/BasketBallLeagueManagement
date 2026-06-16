@@ -61,7 +61,7 @@ export function CreateSeasonWizard({ pastSeasons }: { pastSeasons: PastSeason[] 
   }
 
   async function create() {
-    if (name.trim().length < 2) { toast.error("Season name needs at least 2 characters"); return; }
+    if (name.trim().length < 2) { toast.error("League name needs at least 2 characters"); return; }
     setBusy(true);
     const body: Record<string, unknown> = { name: name.trim() };
     if (sourceId && teamSel.size > 0) {
@@ -76,11 +76,11 @@ export function CreateSeasonWizard({ pastSeasons }: { pastSeasons: PastSeason[] 
     setBusy(false);
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
-      toast.error(typeof j.error === "string" ? j.error : "Could not create season");
+      toast.error(typeof j.error === "string" ? j.error : "Could not create league");
       return;
     }
     const { id } = await res.json();
-    toast.success("Season created as draft");
+    toast.success("League created as draft");
     router.push(`/admin/seasons/${id}`);
   }
 
@@ -91,19 +91,19 @@ export function CreateSeasonWizard({ pastSeasons }: { pastSeasons: PastSeason[] 
           <ArrowLeft className="size-5" />
         </Link>
         <div>
-          <h1 className="text-3xl font-semibold">New season</h1>
+          <h1 className="text-3xl font-semibold">New league</h1>
           <p className="text-sm text-muted-foreground">Created as a draft — set the start date when you activate it.</p>
         </div>
       </div>
 
       <Card className="space-y-2 p-6">
-        <Label htmlFor="season-name">Season name</Label>
-        <Input id="season-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Season 2027" maxLength={80} autoFocus />
+        <Label htmlFor="season-name">League name</Label>
+        <Input id="season-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. League 2027" maxLength={80} autoFocus />
       </Card>
 
       <Card className="space-y-4 p-6">
         <div>
-          <h2 className="font-semibold">Import from a past season <span className="text-sm font-normal text-muted-foreground">(optional)</span></h2>
+          <h2 className="font-semibold">Import from a past league <span className="text-sm font-normal text-muted-foreground">(optional)</span></h2>
           <p className="text-sm text-muted-foreground">Copy divisions, teams, and their rosters. Managers carry over with their team.</p>
         </div>
 
@@ -111,8 +111,8 @@ export function CreateSeasonWizard({ pastSeasons }: { pastSeasons: PastSeason[] 
           <Label className="text-sm text-muted-foreground">Copy from</Label>
           <Select value={sourceId} onValueChange={pickSource}>
             <SelectTrigger className="w-64">
-              <SelectValue placeholder="Select a season">
-                {(v: string) => pastSeasons.find((s) => String(s.id) === v)?.name ?? "Select a season"}
+              <SelectValue placeholder="Select a league">
+                {(v: string) => pastSeasons.find((s) => String(s.id) === v)?.name ?? "Select a league"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -172,7 +172,7 @@ export function CreateSeasonWizard({ pastSeasons }: { pastSeasons: PastSeason[] 
       <div className="flex items-center justify-end gap-2">
         <Link href="/admin/seasons" className="text-sm text-muted-foreground hover:text-foreground">Cancel</Link>
         <Button onClick={create} disabled={busy || name.trim().length < 2}>
-          {busy ? "Creating…" : "Create season"}
+          {busy ? "Creating…" : "Create league"}
         </Button>
       </div>
     </div>

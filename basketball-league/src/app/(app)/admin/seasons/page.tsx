@@ -20,16 +20,16 @@ export default async function AdminSeasonsPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-semibold">Seasons</h1>
+        <h1 className="text-3xl font-semibold">Leagues</h1>
         <div className="flex flex-wrap items-center gap-2">
           <Link href="/admin/seasons/new" className={buttonVariants({ size: "lg" })}>
-            + Add a new season
+            + Add a new league
           </Link>
           <Link
             href="/admin/seasons/archive"
             className={buttonVariants({ variant: "outline", size: "lg" })}
           >
-            View season archive
+            View league archive
           </Link>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default async function AdminSeasonsPage() {
                 </tr>
               ))}
               {activeSeasons.length === 0 && (
-                <tr><td colSpan={4} className="p-4 text-sm text-muted-foreground text-center">No active or draft season. Add one.</td></tr>
+                <tr><td colSpan={4} className="p-4 text-sm text-muted-foreground text-center">No active or draft league. Add one.</td></tr>
               )}
             </tbody>
           </table>

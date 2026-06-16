@@ -21,14 +21,14 @@ export default async function SeasonArchivePage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin/seasons" className="text-sm text-primary hover:underline">← Seasons</Link>
-        <h1 className="mt-2 text-3xl font-semibold">Season archive</h1>
-        <p className="text-sm text-muted-foreground">Read-only records of ended seasons.</p>
+        <Link href="/admin/seasons" className="text-sm text-primary hover:underline">← Leagues</Link>
+        <h1 className="mt-2 text-3xl font-semibold">League archive</h1>
+        <p className="text-sm text-muted-foreground">Read-only records of ended leagues.</p>
       </div>
 
       {ended.length === 0 ? (
         <Card className="p-10 text-center text-sm text-muted-foreground">
-          No ended seasons yet.
+          No ended leagues yet.
         </Card>
       ) : (
         <div className="space-y-3">

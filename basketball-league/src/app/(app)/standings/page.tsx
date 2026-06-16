@@ -50,7 +50,7 @@ export default async function StandingsPage() {
             <div className="min-w-0">
               <p className="text-base font-semibold">View Bracketing</p>
               <p className="text-xs text-muted-foreground">
-                See the full season bracket on the schedule page
+                See the full league bracket on the schedule page
               </p>
             </div>
           </div>

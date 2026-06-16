@@ -35,3 +35,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   return NextResponse.json({ ok: true });
 }
+
+// Orphan the team: unassign whatever team_manager(s) it's linked to. The freed
+// manager(s) then have teamId=null and can be deleted in User Management.
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  try { requireRole(await getSession(), "admin"); }
+  catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
+
+  const { id } = await params;
+  const teamId = Number(id);
+  if (!Number.isFinite(teamId)) return NextResponse.json({ error: "Bad id" }, { status: 400 });
+
+  const team = await db.query.teams.findFirst({ where: eq(teams.id, teamId) });
+  if (!team) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  await db.update(users)
+    .set({ teamId: null })
+    .where(and(eq(users.teamId, teamId), eq(users.role, "team_manager")));
+
+  return NextResponse.json({ ok: true });
+}
