@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type {
   IAgoraRTCClient,
   ILocalAudioTrack,
@@ -45,6 +46,10 @@ export function StreamHost({
   const [error, setError] = useState<string | null>(null);
   const [matchEnded, setMatchEnded] = useState(initialStatus === "ended");
   const [endingMatch, setEndingMatch] = useState(false);
+
+  // The scoreboard renders an empty center-bottom slot; when present we portal
+  // the End Match control into it so it sits inside the scoreboard.
+  const [endSlot, setEndSlot] = useState<HTMLElement | null>(null);
 
   const isResumable = initialStatus === "live";
   const matchEndedRef = useRef(initialStatus === "ended");
@@ -109,6 +114,12 @@ export function StreamHost({
   const startedAtRef = useRef<number>(0);
   const phaseRef = useRef(phase);
   useEffect(() => { phaseRef.current = phase; }, [phase]);
+
+  // Re-resolve the scoreboard slot when status/phase changes (the scoreboard
+  // mounts/unmounts with match status). Falls back to inline if absent.
+  useEffect(() => {
+    setEndSlot(document.getElementById(`scoreboard-end-slot-${matchId}`));
+  }, [matchId, phase, matchEnded]);
 
   const loadDevices = useCallback(async () => {
     try {
@@ -692,26 +703,33 @@ export function StreamHost({
         </div>
       )}
 
-      {!matchEnded && (
-        <div className="flex items-center justify-end">
-          <Button
-            type="button"
-            onClick={endMatch}
-            disabled={endingMatch}
-            variant="destructive"
-            size="lg"
-            className="gap-2"
-          >
-            <CheckCircle2 className="size-4" />
-            {endingMatch ? "Ending…" : "End Match"}
-          </Button>
-        </div>
-      )}
-      {matchEnded && (
-        <p className="text-sm text-muted-foreground text-center">
-          Match ended. Score is final.
-        </p>
-      )}
+      {(() => {
+        const endBlock = (
+          <>
+            {!matchEnded && (
+              <div className="flex items-center justify-center">
+                <Button
+                  type="button"
+                  onClick={endMatch}
+                  disabled={endingMatch}
+                  variant="destructive"
+                  size="lg"
+                  className="gap-2"
+                >
+                  <CheckCircle2 className="size-4" />
+                  {endingMatch ? "Ending…" : "End Match"}
+                </Button>
+              </div>
+            )}
+            {matchEnded && (
+              <p className="text-sm text-muted-foreground text-center">
+                Match ended. Score is final.
+              </p>
+            )}
+          </>
+        );
+        return endSlot ? createPortal(endBlock, endSlot) : endBlock;
+      })()}
 
       {phase === "live" && (
         <div className="rounded-xl border bg-card/50 p-3 grid gap-3 sm:grid-cols-3">

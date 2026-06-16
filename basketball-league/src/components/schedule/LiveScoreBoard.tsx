@@ -124,8 +124,8 @@ export function LiveScoreBoard({
   };
 
   return (
-    <Card className="p-6 sm:p-8">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+    <Card className="p-4 sm:p-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
         <ScoreSide
           label={homeName}
           value={home}
@@ -165,6 +165,12 @@ export function LiveScoreBoard({
           )}
         </div>
       )}
+      {/* Floor of the scoreboard. StreamHost portals the End Match control here
+          while hosting; empty (no layout) otherwise. */}
+      <div
+        id={`scoreboard-end-slot-${matchId}`}
+        className="flex justify-center mt-3 empty:mt-0"
+      />
     </Card>
   );
 }
@@ -183,7 +189,7 @@ function ScoreSide({
   onBump: (delta: number) => void;
 }) {
   return (
-    <div className="space-y-3 text-center">
+    <div className="space-y-2 text-center">
       <p className="text-sm font-medium text-muted-foreground truncate">{label}</p>
       {canEdit ? (
         <input
@@ -192,10 +198,10 @@ function ScoreSide({
           inputMode="numeric"
           value={value}
           onChange={(e) => onType(e.target.value)}
-          className="w-full bg-transparent text-center text-6xl font-semibold tracking-tight tabular-nums outline-none focus:text-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="w-full bg-transparent text-center text-5xl font-semibold tracking-tight tabular-nums outline-none focus:text-primary [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         />
       ) : (
-        <div className="text-6xl font-semibold tracking-tight tabular-nums">
+        <div className="text-5xl font-semibold tracking-tight tabular-nums">
           {value}
         </div>
       )}
