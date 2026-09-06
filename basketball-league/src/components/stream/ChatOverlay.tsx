@@ -10,9 +10,7 @@ const MAX_BODY_LEN = 500;
 const MAX_LABEL_LEN = 40;
 const GUEST_ID_KEY = "chatGuestId";
 const GUEST_NAME_KEY = "chatDisplayName";
-// TikTok/FB-Live style: a message sits on screen for a few seconds, then
-// fades. No scrollback in the overlay — just the last few lines.
-const MESSAGE_LIFETIME_MS = 8000;
+// No auto-fade — messages stay until pushed off by newer ones past the cap.
 const MAX_VISIBLE = 6;
 
 type ChatMessage = {
@@ -76,7 +74,6 @@ export function ChatOverlay({
   const [nameDraft, setNameDraft] = useState("");
 
   const lastIdRef = useRef(0);
-  const timersRef = useRef(new Map<number, number>());
 
   // Poll for new messages. since=lastIdRef fetches only what's new.
   useEffect(() => {
@@ -89,13 +86,6 @@ export function ChatOverlay({
         if (rows.length === 0 || cancelled) return;
         lastIdRef.current = rows[rows.length - 1].id;
         setMessages((prev) => [...prev, ...rows].slice(-MAX_VISIBLE));
-        for (const row of rows) {
-          const t = window.setTimeout(() => {
-            setMessages((prev) => prev.filter((m) => m.id !== row.id));
-            timersRef.current.delete(row.id);
-          }, MESSAGE_LIFETIME_MS);
-          timersRef.current.set(row.id, t);
-        }
       } catch {
         // ignore — next poll retries
       }
@@ -105,11 +95,6 @@ export function ChatOverlay({
     return () => {
       cancelled = true;
       window.clearInterval(id);
-      // Intentionally reads the live map (not a snapshot) — we want whatever
-      // fade timers exist at unmount time, not the ones from effect setup.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      for (const t of timersRef.current.values()) window.clearTimeout(t);
-      timersRef.current.clear();
     };
   }, [matchId]);
 
