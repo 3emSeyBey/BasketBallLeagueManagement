@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { requireRole, canManageTeam, ForbiddenError } from "@/lib/rbac";
 
-const admin = { userId: 1, role: "admin" as const, teamId: null };
-const tm = { userId: 2, role: "team_manager" as const, teamId: 5 };
+const admin = { userId: 1, role: "admin" as const, teamId: null, sessionVersion: 0 };
+const tm = { userId: 2, role: "team_manager" as const, teamId: 5, sessionVersion: 0 };
 
 describe("rbac", () => {
   it("requireRole passes when role matches", () => {

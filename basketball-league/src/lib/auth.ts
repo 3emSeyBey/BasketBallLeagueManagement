@@ -6,6 +6,9 @@ export type SessionPayload = {
   role: "admin" | "team_manager";
   teamId: number | null;
   status?: "pending" | "active";
+  // Compared against users.sessionVersion on every request — bumping the DB
+  // column (done on logout) invalidates every other device's token at once.
+  sessionVersion: number;
 };
 
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET!);
@@ -28,5 +31,8 @@ export async function verifySession(token: string): Promise<SessionPayload> {
     role: payload.role as SessionPayload["role"],
     teamId: (payload.teamId as number | null) ?? null,
     status: (payload.status as SessionPayload["status"]) ?? "active",
+    // Tokens signed before this feature existed carry no claim — treat that
+    // as version 0 (the DB column's default) rather than force a mass logout.
+    sessionVersion: (payload.sessionVersion as number | undefined) ?? 0,
   };
 }

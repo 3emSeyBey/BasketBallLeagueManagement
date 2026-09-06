@@ -87,7 +87,10 @@ export default async function Dashboard() {
         </div>
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-semibold">Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <img src="/ois_logo.png" alt="" className="h-10 w-auto" />
+          <h1 className="text-3xl font-semibold">Dashboard</h1>
+        </div>
         <Link
           href="/standings"
           className={buttonVariants({

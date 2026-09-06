@@ -88,7 +88,10 @@ export async function POST(req: Request) {
   });
 
   // Auto-login: the manager lands on the dashboard in a pending state, no team yet.
-  const token = await signSession({ userId: userRow.id, role: "team_manager", teamId: null, status: "pending" });
+  const token = await signSession({
+    userId: userRow.id, role: "team_manager", teamId: null, status: "pending",
+    sessionVersion: 0, // fresh row — matches the column default
+  });
   const res = NextResponse.json({ id: userRow.id, status: "pending" }, { status: 201 });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",

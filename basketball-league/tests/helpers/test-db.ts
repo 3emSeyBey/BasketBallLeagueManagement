@@ -84,6 +84,7 @@ const DDL = [
     requested_team_name TEXT,
     requested_division_id INTEGER,
     requested_team_id INTEGER,
+    session_version INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
   `CREATE TABLE audit_log (
