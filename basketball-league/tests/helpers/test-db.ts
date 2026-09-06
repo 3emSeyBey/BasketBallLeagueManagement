@@ -97,6 +97,15 @@ const DDL = [
     meta TEXT,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
+  `CREATE TABLE chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+    sender_key TEXT NOT NULL,
+    sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    sender_label TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  );`,
 ];
 
 export type TestDb = ReturnType<typeof drizzle<typeof schema>>;

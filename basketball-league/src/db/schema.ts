@@ -146,9 +146,23 @@ export const auditLog = sqliteTable("audit_log", {
   createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 });
 
+export const chatMessages = sqliteTable("chat_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  matchId: integer("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
+  // Logged-in users: `user:<id>`. Guests: a client-generated id kept in
+  // localStorage. Used to key the per-sender rate limit.
+  senderKey: text("sender_key").notNull(),
+  senderId: integer("sender_id").references(() => users.id, { onDelete: "set null" }),
+  senderLabel: text("sender_label").notNull(),
+  body: text("body").notNull(),
+  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
 export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type AnnouncementImage = typeof announcementImages.$inferSelect;
 export type NewAnnouncementImage = typeof announcementImages.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type NewAuditLog = typeof auditLog.$inferInsert;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type NewChatMessage = typeof chatMessages.$inferInsert;
