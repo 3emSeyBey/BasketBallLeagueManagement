@@ -5,10 +5,12 @@ import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { endSeason } from "@/lib/season-service";
+import { logAudit } from "@/lib/audit";
 
 // End an active season (moves it to the read-only archive).
 export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -20,5 +22,9 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   if (season.status === "ended") return NextResponse.json({ error: "Already ended" }, { status: 409 });
 
   await endSeason(db, seasonId);
+  await logAudit(db, {
+    actorId: session.userId, action: "season.end",
+    targetType: "season", targetId: seasonId,
+  });
   return NextResponse.json({ ok: true });
 }

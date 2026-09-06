@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { teams, divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   name: z.string().min(2).max(80).optional(),
@@ -19,7 +20,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
   const { id } = await params;
   const parsed = Update.safeParse(await req.json());
@@ -30,13 +32,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
   const [row] = await db.update(teams).set(parsed.data).where(eq(teams.id, Number(id))).returning();
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await logAudit(db, {
+    actorId: session.userId, action: "team.update",
+    targetType: "team", targetId: row.id, meta: parsed.data,
+  });
   return NextResponse.json(row);
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
   const { id } = await params;
-  await db.delete(teams).where(eq(teams.id, Number(id)));
+  const idNum = Number(id);
+  const existing = await db.query.teams.findFirst({ where: eq(teams.id, idNum) });
+  await db.delete(teams).where(eq(teams.id, idNum));
+  await logAudit(db, {
+    actorId: session.userId, action: "team.delete",
+    targetType: "team", targetId: idNum, meta: { name: existing?.name },
+  });
   return NextResponse.json({ ok: true });
 }

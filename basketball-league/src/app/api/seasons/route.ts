@@ -6,6 +6,7 @@ import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { importTeams } from "@/lib/season-service";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
@@ -28,7 +29,8 @@ export async function GET() {
  * activation. Optionally imports divisions/teams/rosters from a past season.
  */
 export async function POST(req: Request) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const parsed = Create.safeParse(await req.json());
@@ -48,6 +50,11 @@ export async function POST(req: Request) {
   if (parsed.data.import && parsed.data.import.teams.length > 0) {
     await importTeams(db, season.id, parsed.data.import.sourceSeasonId, parsed.data.import.teams);
   }
+
+  await logAudit(db, {
+    actorId: session.userId, action: "season.create",
+    targetType: "season", targetId: season.id, meta: { name: season.name },
+  });
 
   return NextResponse.json({ id: season.id }, { status: 201 });
 }

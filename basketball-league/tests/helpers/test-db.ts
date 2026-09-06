@@ -86,6 +86,17 @@ const DDL = [
     requested_team_id INTEGER,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
+  `CREATE TABLE audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    actor_label TEXT NOT NULL,
+    action TEXT NOT NULL,
+    outcome TEXT NOT NULL DEFAULT 'success',
+    target_type TEXT,
+    target_id INTEGER,
+    meta TEXT,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  );`,
 ];
 
 export type TestDb = ReturnType<typeof drizzle<typeof schema>>;

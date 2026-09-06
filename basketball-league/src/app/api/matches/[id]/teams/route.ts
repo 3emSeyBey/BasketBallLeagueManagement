@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { matches, teams } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Body = z.object({
   homeTeamId: z.number().int().positive().nullable().optional(),
@@ -16,7 +17,8 @@ const Body = z.object({
  * If the match belongs to a division, teams must belong to that division.
  */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -51,6 +53,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   await db.update(matches)
     .set({ homeTeamId: newHome, awayTeamId: newAway })
     .where(eq(matches.id, matchId));
+
+  await logAudit(db, {
+    actorId: session.userId, action: "match.set_teams",
+    targetType: "match", targetId: matchId, meta: { homeTeamId: newHome, awayTeamId: newAway },
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { divisions, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   name: z.string().min(1).max(80),
@@ -24,7 +25,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -43,6 +45,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       seasonId,
       name: parsed.data.name.trim(),
     }).returning();
+    await logAudit(db, {
+      actorId: session.userId, action: "division.create",
+      targetType: "division", targetId: row.id, meta: { name: row.name, seasonId },
+    });
     return NextResponse.json(row, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Division name already exists for this season" }, { status: 409 });

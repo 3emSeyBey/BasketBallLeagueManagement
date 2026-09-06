@@ -6,6 +6,7 @@ import { users } from "@/db/schema";
 import { hashPassword } from "@/lib/auth";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   email: z.string().email().optional(),
@@ -16,7 +17,8 @@ const Update = z.object({
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -41,6 +43,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       name: users.name, role: users.role, teamId: users.teamId,
     });
     if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const auditPatch = { ...patch };
+    delete auditPatch.passwordHash;
+    await logAudit(db, {
+      actorId: session.userId, action: "user.update",
+      targetType: "user", targetId: row.id,
+      meta: { ...auditPatch, passwordChanged: parsed.data.password !== undefined },
+    });
     return NextResponse.json(row);
   } catch {
     return NextResponse.json({ error: "Email or username already in use" }, { status: 409 });
@@ -65,5 +74,10 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   // A manager assigned to a team can still be deleted; the team is simply left
   // orphaned (no manager). The team row itself is untouched.
   await db.delete(users).where(eq(users.id, idNum));
+  await logAudit(db, {
+    actorId: session!.userId, action: "user.delete",
+    targetType: "user", targetId: idNum,
+    meta: { email: target.email, role: target.role },
+  });
   return NextResponse.json({ ok: true });
 }

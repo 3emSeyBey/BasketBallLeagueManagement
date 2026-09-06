@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { matches } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   seasonId: z.number().int().positive(),
@@ -19,7 +20,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
   const parsed = Create.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -34,5 +36,10 @@ export async function POST(req: Request) {
       agoraChannel: channel,
     })
     .returning();
+  await logAudit(db, {
+    actorId: session.userId, action: "match.create",
+    targetType: "match", targetId: row.id,
+    meta: { homeTeamId: row.homeTeamId, awayTeamId: row.awayTeamId },
+  });
   return NextResponse.json(row, { status: 201 });
 }

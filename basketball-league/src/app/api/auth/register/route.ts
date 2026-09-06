@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { users, teams, divisions } from "@/db/schema";
 import { hashPassword, signSession } from "@/lib/auth";
 import { SESSION_COOKIE } from "@/lib/session";
+import { logAudit } from "@/lib/audit";
 
 const Account = {
   email: z.string().email(),
@@ -77,6 +78,14 @@ export async function POST(req: Request) {
   } catch {
     return NextResponse.json({ error: "Could not complete registration. The account may already exist." }, { status: 409 });
   }
+
+  await logAudit(db, {
+    actorId: userRow.id,
+    actorLabel: data.name || data.email,
+    action: "auth.register",
+    targetType: "user",
+    targetId: userRow.id,
+  });
 
   // Auto-login: the manager lands on the dashboard in a pending state, no team yet.
   const token = await signSession({ userId: userRow.id, role: "team_manager", teamId: null, status: "pending" });

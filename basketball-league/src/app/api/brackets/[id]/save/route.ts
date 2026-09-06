@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { saveBracket } from "@/lib/bracket-service";
 import { assertBracketEditable, SeasonLockedError } from "@/lib/season-guard";
+import { logAudit } from "@/lib/audit";
 
 const Box = z.object({
   bracketMatchId: z.number().int().positive().nullable(),
@@ -24,7 +25,8 @@ const Body = z.object({
 
 // Commit the whole draft bracket and publish it.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -41,5 +43,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
   const tree = await saveBracket(db, bracketId, parsed.data);
+  await logAudit(db, {
+    actorId: session.userId, action: "bracket.save",
+    targetType: "bracket", targetId: bracketId, meta: { title: parsed.data.title },
+  });
   return NextResponse.json(tree);
 }

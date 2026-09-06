@@ -5,11 +5,13 @@ import { db } from "@/db/client";
 import { teams, users } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Body = z.object({ managerId: z.number().int().positive() });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -33,13 +35,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   await db.update(users).set({ teamId }).where(eq(users.id, parsed.data.managerId));
 
+  await logAudit(db, {
+    actorId: session.userId, action: "team.assign_manager",
+    targetType: "team", targetId: teamId, meta: { managerId: parsed.data.managerId },
+  });
+
   return NextResponse.json({ ok: true });
 }
 
 // Orphan the team: unassign whatever team_manager(s) it's linked to. The freed
 // manager(s) then have teamId=null and can be deleted in User Management.
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -52,6 +60,11 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   await db.update(users)
     .set({ teamId: null })
     .where(and(eq(users.teamId, teamId), eq(users.role, "team_manager")));
+
+  await logAudit(db, {
+    actorId: session.userId, action: "team.unassign_manager",
+    targetType: "team", targetId: teamId,
+  });
 
   return NextResponse.json({ ok: true });
 }

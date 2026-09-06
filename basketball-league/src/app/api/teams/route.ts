@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { autoPlaceTeam } from "@/lib/bracket-service";
 import { assertDivisionEditable, SeasonLockedError } from "@/lib/season-guard";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   name: z.string().min(2).max(80),
@@ -20,7 +21,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) {
     if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     throw e;
@@ -46,6 +48,11 @@ export async function POST(req: Request) {
 
   // New team joins the division's default bracket (round 1) automatically.
   await autoPlaceTeam(db, divisionId, row.id);
+
+  await logAudit(db, {
+    actorId: session.userId, action: "team.create",
+    targetType: "team", targetId: row.id, meta: { name, divisionId, managerId },
+  });
 
   return NextResponse.json(row, { status: 201 });
 }

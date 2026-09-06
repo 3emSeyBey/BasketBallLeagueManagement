@@ -6,6 +6,7 @@ import { brackets, bracketMatches, matches, divisions, seasons, teams } from "@/
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { loadBracketTree, setDefaultBracket, eligibleTeamIds } from "@/lib/bracket-service";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   title: z.string().trim().min(1).max(120).optional(),
@@ -47,7 +48,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -74,11 +76,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const updated = await db.query.brackets.findFirst({ where: eq(brackets.id, bracketId) });
+  await logAudit(db, {
+    actorId: session.userId, action: "bracket.update",
+    targetType: "bracket", targetId: bracketId, meta: parsed.data,
+  });
   return NextResponse.json(updated);
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -90,5 +97,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     .from(bracketMatches).where(eq(bracketMatches.bracketId, bracketId));
   await db.delete(brackets).where(eq(brackets.id, bracketId));
   for (const b of boxes) await db.delete(matches).where(eq(matches.id, b.matchId));
+  await logAudit(db, {
+    actorId: session.userId, action: "bracket.delete",
+    targetType: "bracket", targetId: bracketId,
+  });
   return NextResponse.json({ ok: true });
 }

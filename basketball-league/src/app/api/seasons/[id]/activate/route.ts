@@ -6,12 +6,14 @@ import { seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { activateSeason } from "@/lib/season-service";
+import { logAudit } from "@/lib/audit";
 
 const Body = z.object({ startedAt: z.string().datetime() });
 
 // Activate a draft season (sets its start date) and end the current active one.
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -26,5 +28,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (season.status !== "draft") return NextResponse.json({ error: "Only a draft season can be activated" }, { status: 409 });
 
   await activateSeason(db, seasonId, parsed.data.startedAt);
+  await logAudit(db, {
+    actorId: session.userId, action: "season.activate",
+    targetType: "season", targetId: seasonId,
+  });
   return NextResponse.json({ ok: true });
 }

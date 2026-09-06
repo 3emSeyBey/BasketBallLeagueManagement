@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { verifyPassword, signSession } from "@/lib/auth";
 import { SESSION_COOKIE } from "@/lib/session";
+import { logAudit } from "@/lib/audit";
 
 const Body = z.object({
   identifier: z.string().min(1),
@@ -23,8 +24,21 @@ export async function POST(req: Request) {
     where: or(eq(users.email, id), eq(users.username, id)),
   });
   if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    await logAudit(db, {
+      actorId: user?.id ?? null,
+      actorLabel: user?.name || user?.email || id,
+      action: "auth.login",
+      outcome: "failure",
+    });
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
+
+  await logAudit(db, {
+    actorId: user.id,
+    actorLabel: user.name || user.email,
+    action: "auth.login",
+    outcome: "success",
+  });
 
   const token = await signSession({ userId: user.id, role: user.role, teamId: user.teamId, status: user.status });
   const res = NextResponse.json({ id: user.id, email: user.email, role: user.role, teamId: user.teamId });

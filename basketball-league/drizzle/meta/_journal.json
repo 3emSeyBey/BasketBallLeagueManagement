@@ -71,6 +71,13 @@
       "when": 1777648214114,
       "tag": "0009_abnormal_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1778000000000,
+      "tag": "0010_add_audit_log",
+      "breakpoints": true
     }
   ]
 }

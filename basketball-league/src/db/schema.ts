@@ -133,7 +133,22 @@ export type Bracket = typeof brackets.$inferSelect;
 export type NewBracket = typeof brackets.$inferInsert;
 export type BracketMatch = typeof bracketMatches.$inferSelect;
 export type NewBracketMatch = typeof bracketMatches.$inferInsert;
+export const auditLog = sqliteTable("audit_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
+  // Snapshot of who did it, so the row stays readable after the actor is deleted.
+  actorLabel: text("actor_label").notNull(),
+  action: text("action").notNull(),
+  outcome: text("outcome", { enum: ["success", "failure"] }).default("success").notNull(),
+  targetType: text("target_type"),
+  targetId: integer("target_id"),
+  meta: text("meta"),
+  createdAt: text("created_at").default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
 export type Announcement = typeof announcements.$inferSelect;
 export type NewAnnouncement = typeof announcements.$inferInsert;
 export type AnnouncementImage = typeof announcementImages.$inferSelect;
 export type NewAnnouncementImage = typeof announcementImages.$inferInsert;
+export type AuditLog = typeof auditLog.$inferSelect;
+export type NewAuditLog = typeof auditLog.$inferInsert;

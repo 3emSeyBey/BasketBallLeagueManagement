@@ -6,6 +6,7 @@ import { announcements, announcementImages, users } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { sanitizeBody, parseImageIds } from "@/lib/announcements";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   title: z.string().min(1).max(200),
@@ -62,6 +63,11 @@ export async function POST(req: Request) {
         isNull(announcementImages.announcementId),
       ));
   }
+
+  await logAudit(db, {
+    actorId: session!.userId, action: "announcement.create",
+    targetType: "announcement", targetId: row.id, meta: { title: parsed.data.title },
+  });
 
   return NextResponse.json({ id: row.id }, { status: 201 });
 }

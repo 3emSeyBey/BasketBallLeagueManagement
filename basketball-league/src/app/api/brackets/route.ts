@@ -6,6 +6,7 @@ import { brackets, divisions, seasons } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { createBracket } from "@/lib/bracket-service";
+import { logAudit } from "@/lib/audit";
 
 const Create = z.object({
   divisionId: z.number().int().positive(),
@@ -40,7 +41,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const parsed = Create.safeParse(await req.json());
@@ -50,5 +52,9 @@ export async function POST(req: Request) {
   if (!div) return NextResponse.json({ error: "Unknown division" }, { status: 400 });
 
   const bracket = await createBracket(db, parsed.data);
+  await logAudit(db, {
+    actorId: session.userId, action: "bracket.create",
+    targetType: "bracket", targetId: bracket.id, meta: { title: bracket.title, divisionId: bracket.divisionId },
+  });
   return NextResponse.json(bracket, { status: 201 });
 }

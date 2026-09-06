@@ -5,6 +5,7 @@ import { db } from "@/db/client";
 import { announcements, announcementImages, users } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { sanitizeBody, parseImageIds } from "@/lib/announcements";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -82,6 +83,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  await logAudit(db, {
+    actorId: session.userId, action: "announcement.update",
+    targetType: "announcement", targetId: idNum,
+  });
+
   return NextResponse.json({ ok: true });
 }
 
@@ -101,5 +107,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   if (!isAuthor && !isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await db.delete(announcements).where(eq(announcements.id, idNum));
+  await logAudit(db, {
+    actorId: session.userId, action: "announcement.delete",
+    targetType: "announcement", targetId: idNum, meta: { title: existing.title },
+  });
   return NextResponse.json({ ok: true });
 }

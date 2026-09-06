@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { dominantHex } from "@/lib/image-color";
 import { toBytes } from "@/lib/blob";
+import { logAudit } from "@/lib/audit";
 
 const ALLOWED_MIME = new Set([
   "image/png",
@@ -47,8 +48,9 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let session;
   try {
-    requireRole(await getSession(), "admin");
+    session = requireRole(await getSession(), "admin");
   } catch (e) {
     if (e instanceof ForbiddenError)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -87,6 +89,10 @@ export async function POST(
     .update(teams)
     .set({ imageMimeType: file.type, imageData: buf, logoColor })
     .where(eq(teams.id, idNum));
+  await logAudit(db, {
+    actorId: session.userId, action: "team.image_update",
+    targetType: "team", targetId: idNum,
+  });
   return NextResponse.json({ ok: true });
 }
 

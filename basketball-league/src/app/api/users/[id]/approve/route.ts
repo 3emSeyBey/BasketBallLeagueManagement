@@ -5,11 +5,13 @@ import { users, teams } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
 import { autoPlaceTeam } from "@/lib/bracket-service";
+import { logAudit } from "@/lib/audit";
 
 // Approve a pending team-manager registration: materialize their team (create
 // a new one or claim the requested existing one), then activate the account.
 export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -47,6 +49,11 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
     requestedDivisionId: null,
     requestedTeamId: null,
   }).where(eq(users.id, userId));
+
+  await logAudit(db, {
+    actorId: session.userId, action: "user.approve",
+    targetType: "user", targetId: userId, meta: { teamId },
+  });
 
   return NextResponse.json({ ok: true, teamId });
 }

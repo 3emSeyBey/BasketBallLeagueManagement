@@ -12,6 +12,7 @@ import {
 } from "@/lib/announcement-events";
 import { advanceWinner } from "@/lib/bracket-service";
 import { assertSeasonEditable, SeasonLockedError } from "@/lib/season-guard";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   scheduledAt: z.string().datetime().nullable().optional(),
@@ -85,13 +86,24 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
+  await logAudit(db, {
+    actorId: session.userId, action: "match.update",
+    targetType: "match", targetId: idNum, meta: parsed.data,
+  });
+
   return NextResponse.json(row);
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
   const { id } = await params;
-  await db.delete(matches).where(eq(matches.id, Number(id)));
+  const idNum = Number(id);
+  await db.delete(matches).where(eq(matches.id, idNum));
+  await logAudit(db, {
+    actorId: session.userId, action: "match.delete",
+    targetType: "match", targetId: idNum,
+  });
   return NextResponse.json({ ok: true });
 }

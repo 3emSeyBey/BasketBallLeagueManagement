@@ -5,13 +5,15 @@ import { db } from "@/db/client";
 import { divisions } from "@/db/schema";
 import { getSession } from "@/lib/session";
 import { requireRole, ForbiddenError } from "@/lib/rbac";
+import { logAudit } from "@/lib/audit";
 
 const Update = z.object({
   name: z.string().min(1).max(80),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -27,6 +29,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       .where(eq(divisions.id, idNum))
       .returning();
     if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    await logAudit(db, {
+      actorId: session.userId, action: "division.update",
+      targetType: "division", targetId: row.id, meta: { name: row.name },
+    });
     return NextResponse.json(row);
   } catch {
     return NextResponse.json({ error: "Division name already exists for this season" }, { status: 409 });
@@ -34,7 +40,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try { requireRole(await getSession(), "admin"); }
+  let session;
+  try { session = requireRole(await getSession(), "admin"); }
   catch (e) { if (e instanceof ForbiddenError) return NextResponse.json({ error: "Forbidden" }, { status: 403 }); throw e; }
 
   const { id } = await params;
@@ -45,5 +52,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await db.delete(divisions).where(eq(divisions.id, idNum));
+  await logAudit(db, {
+    actorId: session.userId, action: "division.delete",
+    targetType: "division", targetId: idNum, meta: { name: existing.name },
+  });
   return NextResponse.json({ ok: true });
 }
