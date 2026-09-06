@@ -26,7 +26,7 @@ export default async function PublicHome() {
     <div className="space-y-8">
       <div className="bg-primary/10 rounded-2xl p-10 text-center">
         <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <img src="/ois_logo.png" alt="" className="h-16 w-auto shrink-0" />
+          <img src="/ois_logo.png" alt="" className="h-28 w-auto shrink-0" />
           <div>
             <h1 className="text-4xl font-bold">Mayor&apos;s Cup Basketball League</h1>
             <p className="text-muted-foreground mt-2">Bantayan, Cebu — League 2026</p>
