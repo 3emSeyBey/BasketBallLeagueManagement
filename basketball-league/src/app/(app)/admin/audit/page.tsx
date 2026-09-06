@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { getSession } from "@/lib/session";
-import { listAuditLog } from "@/lib/audit";
+import { listAuditLog, loginCountsByUser } from "@/lib/audit";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,8 +26,12 @@ export default async function AuditLogPage({
 
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
-  const { rows, total, pageSize } = await listAuditLog(db, page);
+  const [{ rows, total, pageSize }, loginCounts] = await Promise.all([
+    listAuditLog(db, page),
+    loginCountsByUser(db),
+  ]);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const sortedLoginCounts = [...loginCounts].sort((a, b) => b.count - a.count);
 
   const targetIds = [...new Set(rows.filter(r => r.targetType === "user" && r.targetId != null).map(r => r.targetId!))];
   const targetUsers = targetIds.length
@@ -37,12 +41,9 @@ export default async function AuditLogPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-semibold">Audit Log</h1>
-          <p className="text-sm text-muted-foreground">Admin actions and manager writes across the app.</p>
-        </div>
-        <Link href="/admin/logins" className="text-sm text-primary hover:underline">Login stats →</Link>
+      <div>
+        <h1 className="text-3xl font-semibold">System Monitoring</h1>
+        <p className="text-sm text-muted-foreground">Admin actions and manager writes across the app.</p>
       </div>
 
       <Card className="p-0 overflow-hidden">
@@ -90,6 +91,35 @@ export default async function AuditLogPage({
           >Next →</Link>
         </div>
       )}
+
+      <div>
+        <h2 className="text-xl font-semibold">Login Stats</h2>
+        <p className="text-sm text-muted-foreground">Successful logins per user.</p>
+      </div>
+
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User</TableHead>
+              <TableHead>Total logins</TableHead>
+              <TableHead>Last login</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedLoginCounts.length === 0 && (
+              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-8">No logins recorded yet.</TableCell></TableRow>
+            )}
+            {sortedLoginCounts.map((r) => (
+              <TableRow key={r.actorId ?? r.actorLabel}>
+                <TableCell>{r.actorLabel}</TableCell>
+                <TableCell>{r.count}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{new Date(r.lastLogin).toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

@@ -15,8 +15,7 @@ const NAV_BY_ROLE: Record<Role, { href: string; label: string }[]> = {
     { href: "/schedule", label: "Schedule" },
     { href: "/standings", label: "Standings" },
     { href: "/admin/users", label: "Users" },
-    { href: "/admin/audit", label: "Audit Log" },
-    { href: "/admin/logins", label: "Login Stats" },
+    { href: "/admin/audit", label: "System Monitoring" },
   ],
   team_manager: [
     { href: "/dashboard", label: "Dashboard" },
