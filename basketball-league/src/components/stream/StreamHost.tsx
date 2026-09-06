@@ -24,6 +24,7 @@ import {
   Video,
   VideoOff,
 } from "lucide-react";
+import { ChatOverlay } from "./ChatOverlay";
 
 type Source = "camera" | "screen";
 type QualityPreset = "480p_1" | "720p_3" | "1080p_2";
@@ -37,9 +38,12 @@ const QUALITY_LABELS: Record<QualityPreset, string> = {
 export function StreamHost({
   matchId,
   initialStatus,
+  loggedInLabel,
 }: {
   matchId: number;
   initialStatus?: "planned" | "scheduled" | "started" | "live" | "ended";
+  // The host's own display name for the chat overlay.
+  loggedInLabel?: string | null;
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<"setup" | "starting" | "live">("setup");
@@ -555,6 +559,8 @@ export function StreamHost({
               </div>
             </>
           )}
+
+          {phase === "live" && <ChatOverlay matchId={matchId} loggedInLabel={loggedInLabel} />}
         </div>
       </div>
 

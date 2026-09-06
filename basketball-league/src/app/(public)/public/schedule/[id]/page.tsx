@@ -4,7 +4,6 @@ import { db } from "@/db/client";
 import { matches, teams } from "@/db/schema";
 import { Card } from "@/components/ui/card";
 import { StreamPlayer } from "@/components/stream/StreamPlayer";
-import { ChatBox } from "@/components/stream/ChatBox";
 import { LiveScoreBoard } from "@/components/schedule/LiveScoreBoard";
 import { MatchStatusBadge } from "@/components/schedule/MatchStatusBadge";
 import { effectiveMatchStatus } from "@/lib/match-status";
@@ -44,17 +43,14 @@ export default async function PublicMatchDetail({
         const effective = effectiveMatchStatus(m.status, m.scheduledAt);
         if (effective === "planned" || effective === "scheduled") return null;
         return (
-          <>
-            <LiveScoreBoard
-              matchId={m.id}
-              homeName={home?.name ?? "Home"}
-              awayName={away?.name ?? "Away"}
-              initialHome={m.homeScore}
-              initialAway={m.awayScore}
-              canEdit={false}
-            />
-            <ChatBox matchId={m.id} frozen={effective === "ended"} />
-          </>
+          <LiveScoreBoard
+            matchId={m.id}
+            homeName={home?.name ?? "Home"}
+            awayName={away?.name ?? "Away"}
+            initialHome={m.homeScore}
+            initialAway={m.awayScore}
+            canEdit={false}
+          />
         );
       })()}
       {(() => {

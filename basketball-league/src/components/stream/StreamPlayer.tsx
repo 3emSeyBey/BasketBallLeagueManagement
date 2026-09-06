@@ -20,11 +20,20 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { ChatOverlay } from "./ChatOverlay";
 
 type Status = "idle" | "joining" | "live" | "offline";
 type QualityChoice = "auto" | "high" | "low";
 
-export function StreamPlayer({ matchId }: { matchId: number }) {
+export function StreamPlayer({
+  matchId,
+  loggedInLabel,
+}: {
+  matchId: number;
+  // Pass the viewer's display name when they're logged in — skips the chat
+  // overlay's guest name prompt. Omit for anonymous public viewers.
+  loggedInLabel?: string | null;
+}) {
   const [status, setStatus] = useState<Status>("idle");
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(80);
@@ -417,6 +426,8 @@ export function StreamPlayer({ matchId }: { matchId: number }) {
             </div>
           </div>
         )}
+
+        {status === "live" && <ChatOverlay matchId={matchId} loggedInLabel={loggedInLabel} />}
       </div>
     </div>
   );

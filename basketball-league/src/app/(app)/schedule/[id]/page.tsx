@@ -9,7 +9,6 @@ import { MatchStatusBadge } from "@/components/schedule/MatchStatusBadge";
 import { DeleteMatchButton } from "@/components/schedule/DeleteMatchButton";
 import { StreamHost } from "@/components/stream/StreamHost";
 import { StreamPlayer } from "@/components/stream/StreamPlayer";
-import { ChatBox } from "@/components/stream/ChatBox";
 import { getSession } from "@/lib/session";
 import { canManageTeam } from "@/lib/rbac";
 import { effectiveMatchStatus, isSameMatchDay } from "@/lib/match-status";
@@ -71,21 +70,14 @@ export default async function MatchDetail({
         const effective = effectiveMatchStatus(m.status, m.scheduledAt);
         if (effective === "planned" || effective === "scheduled") return null;
         return (
-          <>
-            <LiveScoreBoard
-              matchId={m.id}
-              homeName={home?.name ?? "Home"}
-              awayName={away?.name ?? "Away"}
-              initialHome={m.homeScore}
-              initialAway={m.awayScore}
-              canEdit={session?.role === "admin" && m.status !== "ended"}
-            />
-            <ChatBox
-              matchId={m.id}
-              frozen={effective === "ended"}
-              loggedInLabel={currentUser ? currentUser.name || currentUser.email : undefined}
-            />
-          </>
+          <LiveScoreBoard
+            matchId={m.id}
+            homeName={home?.name ?? "Home"}
+            awayName={away?.name ?? "Away"}
+            initialHome={m.homeScore}
+            initialAway={m.awayScore}
+            canEdit={session?.role === "admin" && m.status !== "ended"}
+          />
         );
       })()}
 
@@ -99,6 +91,7 @@ export default async function MatchDetail({
           isHost && isSameMatchDay(m.scheduledAt) && m.status !== "ended";
         const showStream = isStartedOrLive || hostMayBroadcastEarly;
         if (!showStream) return null;
+        const loggedInLabel = currentUser ? currentUser.name || currentUser.email : undefined;
         return (
           <Card className="p-6 space-y-4">
             <h2 className="font-semibold">Live Stream</h2>
@@ -112,12 +105,12 @@ export default async function MatchDetail({
                     To switch broadcasting to this device, contact them to end the broadcast on their end.
                   </p>
                 </div>
-                <StreamPlayer matchId={m.id} />
+                <StreamPlayer matchId={m.id} loggedInLabel={loggedInLabel} />
               </>
             ) : isHost ? (
-              <StreamHost matchId={m.id} initialStatus={m.status} />
+              <StreamHost matchId={m.id} initialStatus={m.status} loggedInLabel={loggedInLabel} />
             ) : (
-              <StreamPlayer matchId={m.id} />
+              <StreamPlayer matchId={m.id} loggedInLabel={loggedInLabel} />
             )}
           </Card>
         );
