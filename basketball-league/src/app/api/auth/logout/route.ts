@@ -12,7 +12,7 @@ export async function POST() {
     // Bumping the version invalidates every other device's token too, not
     // just this one — an account-wide logout, not a per-device one.
     await db.update(users)
-      .set({ sessionVersion: sql`${users.sessionVersion} + 1` })
+      .set({ sessionVersion: sql`${users.sessionVersion} + 1`, sessionExpiresAt: null })
       .where(eq(users.id, session.userId));
     await logAudit(db, {
       actorId: session.userId,

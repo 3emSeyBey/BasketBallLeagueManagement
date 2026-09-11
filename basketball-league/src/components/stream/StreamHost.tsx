@@ -273,7 +273,9 @@ export function StreamHost({
       void patchStatus("live").then(() => router.refresh());
     } catch (e) {
       const raw = e instanceof Error ? e.message : "Failed to start stream";
-      const msg = /find stream|getUserMedia|NotReadable|NotFound|Permission|Device/i.test(raw)
+      const msg = /UID_CONFLICT/i.test(raw)
+        ? "Your account is already connected to this stream in another tab or device. Close it there (or wait a few seconds if you just left), then try again."
+        : /find stream|getUserMedia|NotReadable|NotFound|Permission|Device/i.test(raw)
         ? "Couldn't access the camera/mic. Make sure they're connected, allowed in the browser, and not in use by another app or tab, then try again."
         : raw;
       setError(msg);

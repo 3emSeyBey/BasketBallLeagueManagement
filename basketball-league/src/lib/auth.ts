@@ -13,6 +13,8 @@ export type SessionPayload = {
 
 const secret = () => new TextEncoder().encode(process.env.JWT_SECRET!);
 
+export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7;
+
 export const hashPassword = (pw: string) => bcrypt.hash(pw, 10);
 export const verifyPassword = (pw: string, hash: string) => bcrypt.compare(pw, hash);
 
@@ -20,7 +22,7 @@ export async function signSession(p: SessionPayload): Promise<string> {
   return await new SignJWT({ ...p })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime(`${SESSION_TTL_SECONDS}s`)
     .sign(secret());
 }
 

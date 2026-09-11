@@ -13,6 +13,9 @@ export const users = sqliteTable("users", {
   status: text("status", { enum: ["pending", "active"] }).default("active").notNull(),
   // Bumped on logout to invalidate every other device's token at once.
   sessionVersion: integer("session_version").default(0).notNull(),
+  // Expiry (epoch ms) of the newest token issued for the current sessionVersion;
+  // null after logout. Login warns while this is in the future.
+  sessionExpiresAt: integer("session_expires_at"),
   teamId: integer("team_id").references(() => teams.id, { onDelete: "set null" }),
   // For pending team-manager registrations awaiting admin approval.
   requestedTeamName: text("requested_team_name"),

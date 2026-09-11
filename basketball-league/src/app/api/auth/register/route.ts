@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, eq, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, teams, divisions } from "@/db/schema";
-import { hashPassword, signSession } from "@/lib/auth";
+import { hashPassword, signSession, SESSION_TTL_SECONDS } from "@/lib/auth";
 import { SESSION_COOKIE } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 
@@ -73,6 +73,7 @@ export async function POST(req: Request) {
       requestedTeamName,
       requestedDivisionId,
       requestedTeamId,
+      sessionExpiresAt: Date.now() + SESSION_TTL_SECONDS * 1000, // auto-login below
     }).returning({ id: users.id });
     userRow = u;
   } catch {
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ id: userRow.id, status: "pending" }, { status: 201 });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",
-    path: "/", maxAge: 60 * 60 * 24 * 7,
+    path: "/", maxAge: SESSION_TTL_SECONDS,
   });
   return res;
 }
