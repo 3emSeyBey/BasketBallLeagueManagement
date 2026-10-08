@@ -7,20 +7,35 @@ erDiagram
     TEXT contact_number
     TEXT password_hash
     TEXT role
+    TEXT status
+    INTEGER session_version
+    INTEGER session_expires_at
     INTEGER team_id FK
+    TEXT requested_team_name
+    INTEGER requested_division_id FK
+    INTEGER requested_team_id FK
+    TEXT created_at
+  }
+  seasons {
+    INTEGER id PK
+    TEXT name UK
+    TEXT started_at
+    TEXT ended_at
+    TEXT status
+  }
+  divisions {
+    INTEGER id PK
+    INTEGER season_id FK
+    TEXT name
     TEXT created_at
   }
   teams {
     INTEGER id PK
-    TEXT name UK
-    TEXT division
+    TEXT name
+    INTEGER division_id FK
     TEXT image_mime_type
     BLOB image_data
-    TEXT created_at
-  }
-  team_divisions {
-    INTEGER id PK
-    TEXT name UK
+    TEXT logo_color
     TEXT created_at
   }
   players {
@@ -35,28 +50,6 @@ erDiagram
     BLOB image_data
     TEXT created_at
   }
-  seasons {
-    INTEGER id PK
-    TEXT name UK
-    TEXT started_at
-    TEXT ended_at
-    TEXT status
-    TEXT bracket_type
-    BOOLEAN third_place_match
-  }
-  divisions {
-    INTEGER id PK
-    INTEGER season_id FK
-    TEXT name
-    TEXT created_at
-  }
-  season_teams {
-    INTEGER id PK
-    INTEGER season_id FK
-    INTEGER team_id FK
-    INTEGER division_id FK
-    INTEGER seed
-  }
   matches {
     INTEGER id PK
     INTEGER season_id FK
@@ -69,19 +62,23 @@ erDiagram
     INTEGER home_score
     INTEGER away_score
     TEXT agora_channel
-    INTEGER round
-    TEXT stage
-    BOOLEAN is_division_final
-    BOOLEAN is_season_final
-    INTEGER bracket_position
-    INTEGER next_match_id FK
-    TEXT next_match_slot
+    INTEGER broadcaster_user_id FK
   }
-  finals_eliminations {
+  brackets {
     INTEGER id PK
-    INTEGER season_id FK
-    INTEGER team_id FK
-    TEXT eliminated_at
+    INTEGER division_id FK
+    TEXT title
+    BOOLEAN is_default
+    BOOLEAN is_published
+    TEXT created_at
+  }
+  bracket_matches {
+    INTEGER id PK
+    INTEGER bracket_id FK
+    INTEGER match_id FK
+    INTEGER round_index
+    INTEGER slot_index
+    INTEGER feeds_into_id FK
   }
   announcements {
     INTEGER id PK
@@ -99,20 +96,45 @@ erDiagram
     INTEGER created_by FK
     TEXT created_at
   }
+  audit_log {
+    INTEGER id PK
+    INTEGER actor_id FK
+    TEXT actor_label
+    TEXT action
+    TEXT outcome
+    TEXT target_type
+    INTEGER target_id
+    TEXT meta
+    TEXT created_at
+  }
+  chat_messages {
+    INTEGER id PK
+    INTEGER match_id FK
+    TEXT sender_key
+    INTEGER sender_id FK
+    TEXT sender_label
+    TEXT body
+    TEXT created_at
+  }
 
-  teams ||--o{ users : "has manager"
-  teams ||--o{ players : "has"
   seasons ||--o{ divisions : "has"
-  seasons ||--o{ season_teams : "registers"
-  teams ||--o{ season_teams : "in"
-  divisions ||--o{ season_teams : "groups"
+  divisions ||--o{ teams : "has"
+  teams ||--o{ players : "has"
+  teams ||--o{ users : "manages"
+  divisions ||--o{ users : "requests division"
+  teams ||--o{ users : "requests team"
   seasons ||--o{ matches : "schedules"
   divisions ||--o{ matches : "scopes"
   teams ||--o{ matches : "home"
   teams ||--o{ matches : "away"
-  matches ||--o{ matches : "advances to"
-  seasons ||--o{ finals_eliminations : "tracks"
-  teams ||--o{ finals_eliminations : "eliminated"
+  users ||--o{ matches : "broadcasts"
+  divisions ||--o{ brackets : "has"
+  brackets ||--o{ bracket_matches : "contains"
+  matches ||--o{ bracket_matches : "placed in"
+  bracket_matches ||--o{ bracket_matches : "feeds into"
   users ||--o{ announcements : "authors"
   announcements ||--o{ announcement_images : "has"
   users ||--o{ announcement_images : "uploads"
+  users ||--o{ audit_log : "acted as"
+  matches ||--o{ chat_messages : "has"
+  users ||--o{ chat_messages : "sends"
