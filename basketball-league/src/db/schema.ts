@@ -16,6 +16,10 @@ export const users = sqliteTable("users", {
   // Expiry (epoch ms) of the newest token issued for the current sessionVersion;
   // null after logout. Login warns while this is in the future.
   sessionExpiresAt: integer("session_expires_at"),
+  // Consecutive wrong passwords; reset on success or when a lock is applied.
+  failedLoginAttempts: integer("failed_login_attempts").default(0).notNull(),
+  // Epoch ms; login is refused while this is in the future.
+  lockedUntil: integer("locked_until"),
   teamId: integer("team_id").references(() => teams.id, { onDelete: "set null" }),
   // For pending team-manager registrations awaiting admin approval.
   requestedTeamName: text("requested_team_name"),

@@ -26,6 +26,11 @@ export function LoginForm() {
     setLoading(false);
     if (res.status === 409) { setInUseElsewhere(true); return; }
     setInUseElsewhere(false);
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? "Too many failed attempts. Try again later.");
+      return;
+    }
     if (!res.ok) { setError("Invalid credentials"); return; }
     router.push("/dashboard");
     router.refresh();

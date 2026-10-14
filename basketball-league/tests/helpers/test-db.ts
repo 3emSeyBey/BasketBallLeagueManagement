@@ -86,6 +86,8 @@ const DDL = [
     requested_team_id INTEGER,
     session_version INTEGER NOT NULL DEFAULT 0,
     session_expires_at INTEGER,
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until INTEGER,
     created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
   );`,
   `CREATE TABLE audit_log (
