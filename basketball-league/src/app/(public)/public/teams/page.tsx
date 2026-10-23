@@ -1,17 +1,19 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, divisions } from "@/db/schema";
+import { teams } from "@/db/schema";
+import { currentSeasonDivisions } from "@/lib/season-service";
 import { TeamsByDivision, type DivisionGroup } from "@/components/teams/TeamsByDivision";
 
 export const dynamic = "force-dynamic";
 
 export default async function PublicTeams() {
-  const [allTeams, divs] = await Promise.all([
+  const [everyTeam, divs] = await Promise.all([
     db.select().from(teams).orderBy(asc(teams.name)),
-    db.select().from(divisions).orderBy(asc(divisions.name)),
+    currentSeasonDivisions(db),
   ]);
 
   const divNameById = new Map(divs.map((d) => [d.id, d.name]));
+  const allTeams = everyTeam.filter((t) => divNameById.has(t.divisionId));
 
   const groupByName = new Map<string, DivisionGroup>();
   for (const d of divs) {

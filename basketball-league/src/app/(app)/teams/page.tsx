@@ -1,6 +1,7 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/db/client";
-import { teams, divisions } from "@/db/schema";
+import { teams } from "@/db/schema";
+import { currentSeasonDivisions } from "@/lib/season-service";
 import { AddDivisionDialog } from "@/components/divisions/AddDivisionDialog";
 import { TeamsByDivision, type DivisionGroup } from "@/components/teams/TeamsByDivision";
 import { getSession } from "@/lib/session";
@@ -11,12 +12,13 @@ export default async function TeamsPage() {
   const session = (await getSession())!;
   const isAdmin = session.role === "admin";
 
-  const [allTeams, divs] = await Promise.all([
+  const [everyTeam, divs] = await Promise.all([
     db.select().from(teams).orderBy(asc(teams.name)),
-    db.select().from(divisions).orderBy(asc(divisions.name)),
+    currentSeasonDivisions(db),
   ]);
 
   const divNameById = new Map(divs.map((d) => [d.id, d.name]));
+  const allTeams = everyTeam.filter((t) => divNameById.has(t.divisionId));
 
   // One group per division (deduped by name), each holding its serializable teams.
   const groupByName = new Map<string, DivisionGroup>();

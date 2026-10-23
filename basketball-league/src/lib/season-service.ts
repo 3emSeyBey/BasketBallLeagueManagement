@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import type { LibSQLDatabase } from "drizzle-orm/libsql";
 import * as schema from "@/db/schema";
 import { seasons, divisions, teams, players, users } from "@/db/schema";
@@ -78,6 +78,15 @@ export async function activateSeason(db: Database, seasonId: number, startedAt: 
   await db.update(seasons)
     .set({ status: "active", startedAt })
     .where(eq(seasons.id, seasonId));
+}
+
+// Divisions of the active season, or the latest season when none is active
+// (same fallback as the schedule page). Ended seasons live in the archive.
+export async function currentSeasonDivisions(db: Database) {
+  const rows = await db.select().from(seasons).orderBy(desc(seasons.id));
+  const season = rows.find((s) => s.status === "active") ?? rows[0];
+  if (!season) return [];
+  return db.select().from(divisions).where(eq(divisions.seasonId, season.id)).orderBy(asc(divisions.name));
 }
 
 export async function endSeason(db: Database, seasonId: number): Promise<void> {

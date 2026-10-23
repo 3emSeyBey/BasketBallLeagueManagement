@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ChevronRight, Trophy } from "lucide-react";
 import { db } from "@/db/client";
-import { teams, matches, divisions } from "@/db/schema";
+import { teams, matches } from "@/db/schema";
+import { currentSeasonDivisions } from "@/lib/season-service";
 import { computeStandings } from "@/lib/standings";
 import { StandingsTable } from "@/components/standings/StandingsTable";
 import { Card } from "@/components/ui/card";
@@ -14,10 +15,10 @@ export default async function StandingsPage() {
     getSession(),
     db.select().from(teams),
     db.select().from(matches),
-    db.select().from(divisions).orderBy(divisions.name),
+    currentSeasonDivisions(db),
   ]);
   const divisionName = new Map(allDivisions.map((d) => [d.id, d.name]));
-  const teamsWithDivision = allTeams.map((t) => ({
+  const teamsWithDivision = allTeams.filter((t) => divisionName.has(t.divisionId)).map((t) => ({
     id: t.id,
     name: t.name,
     division: divisionName.get(t.divisionId) ?? "",
